@@ -1,0 +1,205 @@
+
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>SalonMind - Ficha Cliente</title>
+
+<link rel="stylesheet" href="css/style.css">
+
+</head>
+
+
+<body>
+
+
+<div class="topbar">
+
+<h2>SalonMind</h2>
+
+<nav>
+
+<a href="clientes.html">⬅️</a>
+
+</nav>
+
+</div>
+
+
+
+<div class="main">
+
+
+<h1>👤 Ficha del Cliente</h1>
+
+<div class="card">
+
+<h2>📷 Galería del cliente</h2>
+
+
+<input 
+type="file" 
+id="fotosCliente"
+accept="image/*"
+multiple
+onchange="agregarFotos(event)"
+>
+
+
+<div id="galeriaFotos">
+
+</div>
+<div class="card">
+
+<h2>✂️ Estilos Favoritos</h2>
+
+
+<input 
+id="corteFavorito" 
+placeholder="Ej: Degradado bajo, Mullet, Crop">
+
+
+<input 
+id="barbaFavorita" 
+placeholder="Ej: Barba corta, Barba larga">
+
+
+<input 
+id="colorFavorito" 
+placeholder="Ej: Rubio ceniza, Castaño">
+
+
+<textarea 
+id="estiloNotas"
+placeholder="Detalles del estilo del cliente">
+</textarea>
+
+
+<button class="btn" onclick="guardarEstilo()">
+
+💾 Guardar estilo
+
+</button>
+
+
+<div id="historialEstilos">
+
+</div>
+
+
+</div>
+<div id="visorFoto" class="visor">
+
+<img id="fotoGrande">
+
+<button onclick="cerrarFoto()">
+❌ Cerrar
+</button>
+
+</div>
+
+</div>
+
+<div class="card">
+
+
+<h2 id="nombreCliente">
+Cliente
+</h2>
+
+
+<p>📞 Teléfono</p>
+
+<p id="telefono"></p>
+
+
+<p>✂️ Servicio favorito</p>
+
+<p id="servicio"></p>
+
+
+<p>📝 Notas</p>
+
+<p id="notas"></p>
+
+
+</div>
+
+
+
+<div class="card">
+
+<h2>🎨 Ficha de Colorimetría</h2>
+
+
+<input id="marcaColor" placeholder="Marca de tintura">
+
+
+<input id="tonoColor" placeholder="Número de tono">
+
+
+<input id="oxidante" placeholder="Oxidante (ej: 20 vol)">
+
+
+<input id="tiempoColor" placeholder="Tiempo de exposición">
+
+
+<textarea id="formulaColor" placeholder="Fórmula y observaciones">
+
+</textarea>
+
+
+<button class="btn" onclick="guardarColor()">
+
+💾 Guardar fórmula
+
+</button>
+
+
+<div id="historialColor"></div>
+
+
+</div>
+
+
+
+<div class="card">
+
+<h2>📅 Historial de visitas</h2>
+
+
+<input id="servicioVisita" placeholder="Servicio realizado">
+
+
+<input id="precioVisita" placeholder="Precio">
+
+
+<textarea id="notaVisita" placeholder="Observaciones"></textarea>
+
+
+<button class="btn" onclick="agregarVisita()">
+
+➕ Agregar visita
+
+</button>
+
+
+<div id="listaVisitas"></div>
+
+
+</div>
+
+
+</div>
+
+
+<script src="js/ficha.js"></script>
+
+
+</body>
+
+</html>

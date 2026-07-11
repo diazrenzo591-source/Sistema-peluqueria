@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Perfil del Profesional</title>
+
+<link rel="stylesheet" href="css/style.css">
+
+</head>
+
+<body>
+
+<div class="topbar">
+
+<h2>SalonMind</h2>
+
+</div>
+
+<div class="main">
+
+<div class="card">
+
+<h1 id="nombreEmpleado"></h1>
+
+<input type="file"
+id="fotoEmpleado"
+accept="image/*"
+onchange="subirFotoEmpleado(event)">
+
+<img id="imagenEmpleado"
+style="width:170px;border-radius:50%;margin:20px 0;">
+
+<p><strong>Especialidad:</strong></p>
+
+<input id="especialidad"
+placeholder="Ej: Barbero, Colorista">
+
+<button class="btn"
+onclick="guardarEspecialidad()">
+
+Guardar
+
+</button>
+
+</div>
+
+<div class="cards">
+
+<div class="card">
+
+<h2 id="clientesAtendidos">0</h2>
+
+<p>Clientes atendidos</p>
+
+</div>
+
+<div class="card">
+
+<h2 id="facturacionEmpleado">$0</h2>
+
+<p>Facturación</p>
+
+</div>
+
+<div class="card">
+
+<h2 id="comisionEmpleado">$0</h2>
+
+<p>Comisiones</p>
+
+</div>
+
+</div>
+
+</div>
+
+<script src="js/perfilEmpleado.js"></script>
+
+</body>
+
+</html>

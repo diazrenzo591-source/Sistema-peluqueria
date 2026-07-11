@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>SalonMind - Servicios</title>
+
+<link rel="stylesheet" href="css/style.css">
+<link rel="manifest" href="manifest.json">
+</head>
+
+
+<body>
+
+
+<div class="topbar">
+
+<h2>SalonMind</h2>
+
+<nav>
+
+<a href="dashboard.html">📊</a>
+<a href="clientes.html">👥</a>
+<a href="turnos.html">📅</a>
+<a href="servicios.html">✂️</a>
+<a href="empleados.html">👨‍💼</a>
+<a href="caja.html">💰</a>
+
+</nav>
+
+</div>
+
+
+
+<div class="main">
+
+
+<h1>✂️ Servicios</h1>
+
+
+<button class="btn" onclick="mostrarServicio()">
+
+➕ Nuevo Servicio
+
+</button>
+
+
+
+<div id="formServicio" class="formulario">
+
+
+<h2>Nuevo Servicio</h2>
+
+
+<input id="nombreServicio" placeholder="Nombre del servicio">
+
+
+<input id="precioServicio" type="number" placeholder="Precio">
+
+
+<input id="duracionServicio" placeholder="Duración (minutos)">
+
+
+
+<button class="btn" onclick="guardarServicio()">
+
+Guardar
+
+</button>
+
+
+</div>
+
+
+
+
+<div class="table-container">
+
+
+<table>
+
+
+<thead>
+
+<tr>
+
+<th>Servicio</th>
+<th>Precio</th>
+<th>Duración</th>
+
+</tr>
+
+</thead>
+
+
+<tbody id="tablaServicios">
+
+
+</tbody>
+
+
+</table>
+
+
+</div>
+
+
+</div>
+
+
+<script src="js/servicios.js"></script>
+
+
+</body>
+
+</html>

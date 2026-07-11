@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>SalonMind - Clientes</title>
+
+<link rel="stylesheet" href="css/style.css">
+<link rel="manifest" href="manifest.json">
+</head>
+
+
+<body>
+
+
+<div class="topbar">
+
+<h2>SalonMind</h2>
+
+<nav>
+
+<a href="dashboard.html">📊</a>
+<a href="clientes.html">👥</a>
+<a href="turnos.html">📅</a>
+<a href="servicios.html">✂️</a>
+<a href="empleados.html">👨‍💼</a>
+<a href="caja.html">💰</a>
+
+</nav>
+
+</div>
+
+
+
+<div class="main">
+
+
+<h1>👥 Clientes</h1>
+
+<input 
+id="buscador" 
+placeholder="🔎 Buscar cliente..."
+onkeyup="buscarCliente()">
+
+<button class="btn" onclick="mostrarFormulario()">
+➕ Nuevo Cliente
+</button>
+
+
+<div id="formulario" class="formulario">
+
+<h2>Nuevo Cliente</h2>
+
+<input id="nombre" placeholder="Nombre completo">
+
+<input id="telefono" placeholder="Teléfono">
+
+<input id="fecha" type="date">
+
+<input id="servicio" placeholder="Servicio favorito">
+
+<textarea id="notas" placeholder="Notas"></textarea>
+
+
+<button class="btn" onclick="guardarCliente()">
+💾 Guardar Cliente
+</button>
+
+</div>
+
+<div id="formEditar" class="formulario">
+
+<h2>Editar Cliente</h2>
+
+<input id="editarNombre" placeholder="Nombre">
+
+<input id="editarTelefono" placeholder="Teléfono">
+
+<input id="editarServicio" placeholder="Servicio favorito">
+
+<textarea id="editarNotas" placeholder="Notas"></textarea>
+
+
+<button class="btn" onclick="guardarEdicion()">
+💾 Guardar cambios
+</button>
+
+</div>
+
+<div id="formulario" class="formulario">
+
+
+<h2>Nuevo Cliente</h2>
+
+
+<input id="nombre" placeholder="Nombre completo">
+
+
+<input id="telefono" placeholder="Teléfono">
+
+
+<input id="fecha" type="date">
+
+
+<input id="servicio" placeholder="Servicio favorito">
+
+
+<textarea id="notas" placeholder="Notas del cliente"></textarea>
+
+
+<button class="btn" onclick="guardarCliente()">
+
+Guardar Cliente
+
+</button>
+
+
+</div>
+
+
+
+
+<div class="table-container">
+
+
+<table>
+
+
+<thead>
+
+<tr>
+
+<th>Nombre</th>
+<th>Teléfono</th>
+<th>Última visita</th>
+<th>Acciones</th>
+<th>Ficha</th>
+
+</tr>
+
+</thead>
+
+
+<tbody id="tablaClientes">
+
+
+</tbody>
+
+
+</table>
+
+
+</div>
+
+
+</div>
+
+
+
+<script src="js/clientes.js"></script>
+
+
+</body>
+
+</html>
