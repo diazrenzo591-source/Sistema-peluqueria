@@ -1,14 +1,20 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SalonMind - Dashboard</title>
+
+<title>SalonMind - Caja</title>
+
 <link rel="stylesheet" href="css/style.css">
 <link rel="manifest" href="manifest.json">
 </head>
 
+
 <body>
+
 
 <div class="topbar">
 
@@ -27,90 +33,62 @@
 </div>
 
 
+
 <div class="main">
 
-<h1>Dashboard</h1>
+
+<h1>💰 Caja</h1>
+
 
 <div class="cards">
 
 <div class="card">
-
-<h2 id="turnosHoy">0</h2>
-
-<p>📅 Turnos Hoy</p>
-
+<h2 id="hoy">$0</h2>
+<p>Hoy</p>
 </div>
 
 
 <div class="card">
-
-<h2 id="ingresos">0</h2>
-
-<p>💰 Ingresos</p>
-
+<h2 id="semana">$0</h2>
+<p>Semana</p>
 </div>
 
 
 <div class="card">
-
-<h2 id="clientesTotal">0</h2>
-
-<p>👥 Clientes</p>
-
-</div>
-
-
-<div class="card">
-
-<h2 id="empleadosTotal">0</h2>
-
-<p>👨‍💼 Empleados</p>
-
+<h2 id="mes">$0</h2>
+<p>Mes</p>
 </div>
 
 </div>
 
-<div class="dashboard-section">
 
-
-<div class="section-box">
-
-<h2>📅 Próximos Turnos</h2>
+<div class="table-container">
 
 <table>
 
+<thead>
 <tr>
-<th>Hora</th>
 <th>Cliente</th>
 <th>Servicio</th>
-<th>Profesional</th>
+<th>Monto</th>
+<th>Pago</th>
+<th>Fecha</th>
 </tr>
+</thead>
 
-<tbody id="proximosTurnos"></tbody>
+<tbody id="tablaCaja"></tbody>
 
 </table>
 
 </div>
 
 
-
-<div class="section-box">
-
-<h2>🔥 Servicios más vendidos</h2>
-
-<div id="serviciosTop">
-
-<p>Sin datos todavía</p>
-
 </div>
 
 
-</div>
+<script src="js/caja.js"></script>
 
 
-
-</div>
-</div>
-<script src="js/dashboard.js"></script>
 </body>
+
 </html>

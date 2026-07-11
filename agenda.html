@@ -6,15 +6,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>SalonMind - Empleados</title>
+<title>Agenda - SalonMind</title>
 
 <link rel="stylesheet" href="css/style.css">
 <link rel="manifest" href="manifest.json">
 </head>
 
-
 <body>
-
 
 <div class="topbar">
 
@@ -33,79 +31,17 @@
 </div>
 
 
-
 <div class="main">
 
+<h1>🗓️ Agenda del día</h1>
 
-<h1>👨‍💼 Empleados</h1>
-
-
-<button class="btn" onclick="mostrarEmpleado()">
-
-➕ Nuevo Empleado
-
-</button>
-
-
-
-<div id="formEmpleado" class="formulario">
-
-
-<h2>Nuevo Empleado</h2>
-
-
-<input id="nombreEmpleado" placeholder="Nombre">
-
-
-<input id="comisionEmpleado" placeholder="Comisión %">
-
-
-<button class="btn" onclick="guardarEmpleado()">
-
-Guardar
-
-</button>
-
-
-</div>
-
-
-
-<div class="table-container">
-
-
-<table>
-
-<thead>
-
-<tr>
-
-<th>Nombre</th>
-<th>Comisión</th>
-<th>Ganancias</th>
-<th>Perfil</th>
-
-</tr>
-
-</thead>
-
-
-<tbody id="tablaEmpleados">
-
-
-</tbody>
-
-
-</table>
-
+<div id="agenda">
 
 </div>
 
 </div>
 
-
-<script src="js/empleados.js"></script>
-
+<script src="js/agenda.js"></script>
 
 </body>
 
