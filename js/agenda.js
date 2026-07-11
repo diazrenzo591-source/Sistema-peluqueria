@@ -2,6 +2,12 @@ let turnos = JSON.parse(
 localStorage.getItem("turnos")
 ) || [];
 
+let hoy = new Date().toISOString().split("T")[0];
+
+let turnosHoy = turnos.filter(
+t => t.fecha == hoy && t.estado != "Cancelado"
+);
+
 let agenda =
 document.getElementById("agenda");
 
@@ -26,7 +32,7 @@ let horas = [
 
 horas.forEach(hora=>{
 
-let turno = turnos.find(
+let turno = turnosHoy.find(
 t=>t.hora==hora
 );
 

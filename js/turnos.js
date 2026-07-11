@@ -4,6 +4,8 @@ let clientesGuardados = JSON.parse(localStorage.getItem("clientes")) || [];
 
 let serviciosGuardados = JSON.parse(localStorage.getItem("servicios")) || [];
 
+let empleadosGuardados = JSON.parse(localStorage.getItem("empleados")) || [];
+
 
 // Mostrar / ocultar formulario
 
@@ -296,6 +298,48 @@ ${servicio.nombre} - $${servicio.precio}
 
 
 
+// Cargar profesionales (empleados guardados)
+
+function cargarProfesionales(){
+
+
+let select = document.getElementById("profesional");
+
+
+if(!select)return;
+
+
+
+select.innerHTML = `
+
+<option>
+Seleccionar profesional
+</option>
+
+`;
+
+
+
+empleadosGuardados.forEach(function(empleado){
+
+
+select.innerHTML += `
+
+<option value="${empleado.nombre}">
+
+${empleado.nombre}
+
+</option>
+
+`;
+
+});
+
+
+}
+
+
+
 // Cargar precio automáticamente
 
 let servicioSelect = document.getElementById("servicio");
@@ -400,6 +444,8 @@ cliente:turno.cliente,
 
 servicio:turno.servicio,
 
+profesional:turno.profesional,
+
 monto:Number(turno.precio),
 
 formaPago:turno.formaPago,
@@ -439,5 +485,7 @@ mostrarTurnos();
 cargarClientes();
 
 cargarServicios();
+
+cargarProfesionales();
 
 mostrarTurnos();
