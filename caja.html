@@ -10,6 +10,7 @@
 
 <link rel="stylesheet" href="css/style.css">
 <link rel="manifest" href="manifest.json">
+<script src="js/sesion.js"></script>
 </head>
 
 
@@ -28,6 +29,7 @@
 <a href="servicios.html" title="Servicios">✂️</a>
 <a href="empleados.html" title="Empleados">👨‍💼</a>
 <a href="caja.html" title="Caja">💰</a>
+<a href="#" title="Cerrar sesión" onclick="logout()">🚪</a>
 </nav>
 
 </div>
@@ -64,6 +66,27 @@
 
 <div class="table-container">
 
+<div class="filtros">
+
+<select id="filtroCaja" onchange="cambiarFiltro()">
+<option value="todo">Todo el historial</option>
+<option value="hoy">Hoy</option>
+<option value="semana">Esta semana</option>
+<option value="mes">Este mes</option>
+<option value="rango">Rango de fechas</option>
+</select>
+
+<input type="date" id="fechaDesde" style="display:none;">
+<input type="date" id="fechaHasta" style="display:none;">
+
+<button class="btn" id="btnFiltrarRango" onclick="mostrarCaja()" style="display:none;">
+Filtrar
+</button>
+
+</div>
+
+<p id="totalFiltrado"></p>
+
 <table>
 
 <thead>
@@ -77,6 +100,27 @@
 </thead>
 
 <tbody id="tablaCaja"></tbody>
+
+</table>
+
+</div>
+
+
+<div class="table-container" style="margin-top:20px;">
+
+<h2 style="color:white;margin-bottom:15px;">👨‍💼 Facturación por profesional</h2>
+
+<table>
+
+<thead>
+<tr>
+<th>Profesional</th>
+<th>Servicios</th>
+<th>Total facturado</th>
+</tr>
+</thead>
+
+<tbody id="tablaProfesionales"></tbody>
 
 </table>
 
