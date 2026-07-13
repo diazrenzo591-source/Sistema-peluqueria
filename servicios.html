@@ -10,6 +10,7 @@
 
 <link rel="stylesheet" href="css/style.css">
 <link rel="manifest" href="manifest.json">
+<script src="js/config.js"></script>
 <script src="js/sesion.js"></script>
 </head>
 
@@ -76,6 +77,23 @@ Guardar
 </div>
 
 
+<div id="formEditarServicio" class="formulario">
+
+<h2>Editar Servicio</h2>
+
+<input id="editarNombreServicio" placeholder="Nombre del servicio">
+
+<input id="editarPrecioServicio" type="number" placeholder="Precio">
+
+<input id="editarDuracionServicio" placeholder="Duración (minutos)">
+
+<button class="btn" onclick="guardarEdicionServicio()">
+💾 Guardar cambios
+</button>
+
+</div>
+
+
 
 
 <div class="table-container">
@@ -91,6 +109,7 @@ Guardar
 <th>Servicio</th>
 <th>Precio</th>
 <th>Duración</th>
+<th>Acciones</th>
 
 </tr>
 

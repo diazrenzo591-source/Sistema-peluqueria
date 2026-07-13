@@ -10,6 +10,7 @@
 
 <link rel="stylesheet" href="css/style.css">
 <link rel="manifest" href="manifest.json">
+<script src="js/config.js"></script>
 <script src="js/sesion.js"></script>
 </head>
 
@@ -72,6 +73,21 @@ Guardar
 </div>
 
 
+<div id="formEditarEmpleado" class="formulario">
+
+<h2>Editar Empleado</h2>
+
+<input id="editarNombreEmpleado" placeholder="Nombre">
+
+<input id="editarComisionEmpleado" placeholder="Comisión %">
+
+<button class="btn" onclick="guardarEdicionEmpleado()">
+💾 Guardar cambios
+</button>
+
+</div>
+
+
 
 <div class="table-container">
 
@@ -86,6 +102,7 @@ Guardar
 <th>Comisión</th>
 <th>Ganancias</th>
 <th>Perfil</th>
+<th>Acciones</th>
 
 </tr>
 

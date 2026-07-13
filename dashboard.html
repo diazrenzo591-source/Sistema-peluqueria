@@ -6,6 +6,7 @@
 <title>SalonMind - Dashboard</title>
 <link rel="stylesheet" href="css/style.css">
 <link rel="manifest" href="manifest.json">
+<script src="js/config.js"></script>
 <script src="js/sesion.js"></script>
 </head>
 
@@ -106,6 +107,19 @@
 
 </div>
 
+
+</div>
+
+
+<div class="section-box">
+
+<h2>💾 Backup de datos</h2>
+
+<p>Guardá una copia de seguridad de todo (turnos, clientes, empleados, etc.) o restaurala en otro dispositivo.</p>
+
+<button class="btn" onclick="exportarBackup()">⬇️ Exportar backup</button>
+
+<input type="file" id="importarArchivo" accept="application/json" onchange="importarBackup(event)">
 
 </div>
 
