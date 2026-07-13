@@ -6,6 +6,8 @@ let serviciosGuardados = JSON.parse(localStorage.getItem("servicios")) || [];
 
 let empleadosGuardados = JSON.parse(localStorage.getItem("empleados")) || [];
 
+let turnoEditIndex = null;
+
 
 // Mostrar / ocultar formulario
 
@@ -18,7 +20,13 @@ if(formulario.style.display=="block"){
 
 formulario.style.display="none";
 
+turnoEditIndex = null;
+
 }else{
+
+turnoEditIndex = null;
+
+limpiarFormularioTurno();
 
 formulario.style.display="block";
 
@@ -28,7 +36,22 @@ formulario.style.display="block";
 
 
 
-// Guardar turno
+function limpiarFormularioTurno(){
+
+document.getElementById("cliente").value = "Seleccionar cliente";
+document.getElementById("fecha").value = "";
+document.getElementById("hora").value = "";
+document.getElementById("servicio").value = "Seleccionar servicio";
+document.getElementById("precioTurno").value = "";
+document.getElementById("profesional").value = "Seleccionar profesional";
+document.getElementById("estado").value = "Pendiente";
+document.getElementById("formaPago").value = "Efectivo";
+
+}
+
+
+
+// Guardar turno (nuevo o editado)
 
 function guardarTurno(){
 
@@ -80,6 +103,25 @@ return;
 }
 
 
+// Si el cliente está bloqueado, avisar antes de continuar
+// (esto no afecta a ningún otro cliente, solo a este)
+
+let clienteInfo = clientesGuardados.find(
+c => c.nombre == cliente.replace("🔒 ","")
+);
+
+
+if(clienteInfo && clienteInfo.bloqueado){
+
+let continuar = confirm(
+"⚠️ Este cliente está BLOQUEADO (pago pendiente).\n¿Igual querés cargarle el turno?"
+);
+
+if(!continuar) return;
+
+}
+
+
 
 let nuevoTurno = {
 
@@ -94,14 +136,15 @@ formaPago:formaPago
 
 };
 
-// Verificar si el profesional ya tiene un turno
+// Verificar si el profesional ya tiene un turno (ignorando el turno que se está editando)
 
-let ocupado = turnos.find(t =>
+let ocupado = turnos.find((t,i) =>
 
 t.fecha == fecha &&
 t.hora == hora &&
 t.profesional == profesional &&
-t.estado != "Cancelado"
+t.estado != "Cancelado" &&
+i != turnoEditIndex
 
 );
 
@@ -113,12 +156,13 @@ alert("Ese profesional ya tiene un turno en ese horario.");
 return;
 
 }
-let clienteOcupado = turnos.find(t =>
+let clienteOcupado = turnos.find((t,i) =>
 
 t.fecha == fecha &&
 t.hora == hora &&
 t.cliente == cliente &&
-t.estado != "Cancelado"
+t.estado != "Cancelado" &&
+i != turnoEditIndex
 
 );
 
@@ -131,7 +175,18 @@ return;
 
 }
 
+
+if(turnoEditIndex !== null){
+
+turnos[turnoEditIndex] = nuevoTurno;
+
+turnoEditIndex = null;
+
+}else{
+
 turnos.push(nuevoTurno);
+
+}
 
 localStorage.setItem(
 "turnos",
@@ -172,6 +227,21 @@ tabla.innerHTML="";
 turnos.forEach((turno,index)=>{
 
 
+let acciones = "";
+
+
+if(turno.estado!="Finalizado" && turno.estado!="Cancelado"){
+
+acciones += `<button onclick="editarTurno(${index})">✏️</button> `;
+acciones += `<button onclick="finalizarTurno(${index})">✅ Finalizar</button> `;
+acciones += `<button onclick="cancelarTurno(${index})">🚫 Cancelar</button> `;
+
+}
+
+
+acciones += `<button onclick="recordarTurno(${index})">📲</button>`;
+
+
 tabla.innerHTML += `
 
 <tr>
@@ -196,9 +266,7 @@ tabla.innerHTML += `
 
 <td>
 
-${turno.estado!="Finalizado" && turno.estado!="Cancelado" ?
-`<button onclick="finalizarTurno(${index})">Finalizar</button>` :
-""}
+${acciones}
 
 </td>
 
@@ -243,7 +311,7 @@ select.innerHTML += `
 
 <option value="${cliente.nombre}">
 
-${cliente.nombre}
+${cliente.bloqueado ? "🔒 " : ""}${cliente.nombre}
 
 </option>
 
@@ -372,6 +440,102 @@ servicio.precio;
 
 
 });
+
+
+}
+
+
+
+// Editar turno existente
+
+function editarTurno(index){
+
+
+let turno = turnos[index];
+
+turnoEditIndex = index;
+
+
+document.getElementById("cliente").value = turno.cliente;
+document.getElementById("fecha").value = turno.fecha;
+document.getElementById("hora").value = turno.hora;
+document.getElementById("servicio").value = turno.servicio;
+document.getElementById("precioTurno").value = turno.precio;
+document.getElementById("profesional").value = turno.profesional;
+document.getElementById("estado").value = turno.estado;
+document.getElementById("formaPago").value = turno.formaPago;
+
+
+document.getElementById("formTurno").style.display = "block";
+
+
+}
+
+
+
+// Cancelar turno
+
+function cancelarTurno(index){
+
+
+let confirmar = confirm(
+"¿Seguro que querés cancelar este turno?"
+);
+
+
+if(!confirmar) return;
+
+
+turnos[index].estado = "Cancelado";
+
+
+localStorage.setItem(
+"turnos",
+JSON.stringify(turnos)
+);
+
+
+mostrarTurnos();
+
+
+}
+
+
+
+// Enviar recordatorio por WhatsApp
+
+function recordarTurno(index){
+
+
+let turno = turnos[index];
+
+
+let cliente = clientesGuardados.find(
+c => c.nombre == turno.cliente
+);
+
+
+if(!cliente || !cliente.telefono){
+
+alert("Este cliente no tiene un teléfono cargado en su ficha.");
+
+return;
+
+}
+
+
+let telefono = cliente.telefono.replace(/\D/g,"");
+
+
+let mensaje =
+`Hola ${turno.cliente}! Te recordamos tu turno el ${turno.fecha} a las ${turno.hora} para ${turno.servicio}. ¡Te esperamos!`;
+
+
+let url =
+`https://wa.me/${telefono}?text=${encodeURIComponent(mensaje)}`;
+
+
+window.open(url,"_blank");
 
 
 }

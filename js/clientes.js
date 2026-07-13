@@ -104,6 +104,11 @@ tabla.innerHTML += `
 
 <td>${cliente.fecha}</td>
 
+<td>
+<span class="estado ${cliente.bloqueado ? 'Cancelado' : 'Confirmado'}">
+${cliente.bloqueado ? '🔒 Bloqueado' : '✅ Activo'}
+</span>
+</td>
 
 <td>
 
@@ -114,6 +119,11 @@ tabla.innerHTML += `
 
 <button onclick="eliminarCliente(${index})">
 🗑️ Eliminar
+</button>
+
+
+<button onclick="toggleBloqueo(${index})">
+${cliente.bloqueado ? '🔓 Desbloquear' : '🔒 Bloquear'}
 </button>
 
 
@@ -138,6 +148,20 @@ tabla.innerHTML += `
 
 }
 mostrarClientes();
+
+
+function toggleBloqueo(index){
+
+clientes[index].bloqueado = !clientes[index].bloqueado;
+
+localStorage.setItem(
+"clientes",
+JSON.stringify(clientes)
+);
+
+mostrarClientes();
+
+}
 
 
 function verFicha(nombre){

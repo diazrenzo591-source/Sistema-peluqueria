@@ -139,3 +139,97 @@ contenedorTop.innerHTML = ranking
 }
 
 }
+
+
+
+// Exportar todos los datos guardados en un archivo .json
+
+function exportarBackup(){
+
+let backup = {};
+
+
+for(let i=0;i<localStorage.length;i++){
+
+let clave = localStorage.key(i);
+
+if(clave=="sesion") continue;
+
+backup[clave] = localStorage.getItem(clave);
+
+}
+
+
+let contenido = JSON.stringify(backup);
+
+let blob = new Blob([contenido], {type:"application/json"});
+
+let url = URL.createObjectURL(blob);
+
+
+let link = document.createElement("a");
+
+link.href = url;
+
+link.download =
+"backup-salonmind-"+new Date().toISOString().split("T")[0]+".json";
+
+link.click();
+
+URL.revokeObjectURL(url);
+
+}
+
+
+
+// Restaurar datos desde un archivo .json exportado antes
+
+function importarBackup(event){
+
+let archivo = event.target.files[0];
+
+if(!archivo) return;
+
+
+let lector = new FileReader();
+
+
+lector.onload = function(){
+
+try{
+
+let datos = JSON.parse(lector.result);
+
+
+let confirmar = confirm(
+"Esto va a reemplazar todos los datos actuales por los del backup. ¿Continuar?"
+);
+
+
+if(!confirmar) return;
+
+
+Object.keys(datos).forEach(clave=>{
+
+localStorage.setItem(clave, datos[clave]);
+
+});
+
+
+alert("Backup restaurado correctamente. La página se va a recargar.");
+
+location.reload();
+
+
+}catch(error){
+
+alert("El archivo elegido no es un backup válido.");
+
+}
+
+}
+
+
+lector.readAsText(archivo);
+
+}

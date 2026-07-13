@@ -3,6 +3,8 @@ let empleados = JSON.parse(
 localStorage.getItem("empleados")
 ) || [];
 
+let empleadoEditarIndex = null;
+
 
 
 function mostrarEmpleado(){
@@ -67,6 +69,10 @@ JSON.stringify(empleados)
 mostrarEmpleados();
 
 
+document.getElementById("nombreEmpleado").value = "";
+document.getElementById("comisionEmpleado").value = "";
+
+
 }
 
 
@@ -104,6 +110,14 @@ tabla.innerHTML += `
 </button>
 </td>
 
+<td>
+
+<button onclick="editarEmpleado(${index})">✏️ Editar</button>
+
+<button onclick="eliminarEmpleado(${index})">🗑️ Eliminar</button>
+
+</td>
+
 </tr>
 
 `;
@@ -126,5 +140,84 @@ empleados[index].nombre
 
 window.location.href =
 "perfil-empleado.html";
+
+}
+
+
+
+function editarEmpleado(index){
+
+empleadoEditarIndex = index;
+
+let empleado = empleados[index];
+
+
+document.getElementById("editarNombreEmpleado").value = empleado.nombre;
+document.getElementById("editarComisionEmpleado").value = empleado.comision;
+
+
+document.getElementById("formEditarEmpleado").style.display = "block";
+
+
+}
+
+
+
+function guardarEdicionEmpleado(){
+
+
+if(empleadoEditarIndex === null) return;
+
+
+let empleado = empleados[empleadoEditarIndex];
+
+
+empleado.nombre = document.getElementById("editarNombreEmpleado").value;
+empleado.comision = document.getElementById("editarComisionEmpleado").value;
+
+
+localStorage.setItem(
+"empleados",
+JSON.stringify(empleados)
+);
+
+
+document.getElementById("formEditarEmpleado").style.display = "none";
+
+empleadoEditarIndex = null;
+
+
+mostrarEmpleados();
+
+
+alert("Empleado actualizado");
+
+
+}
+
+
+
+function eliminarEmpleado(index){
+
+
+let confirmar = confirm(
+"¿Seguro que querés eliminar este empleado? Sus turnos ya cargados no se van a borrar."
+);
+
+
+if(!confirmar) return;
+
+
+empleados.splice(index,1);
+
+
+localStorage.setItem(
+"empleados",
+JSON.stringify(empleados)
+);
+
+
+mostrarEmpleados();
+
 
 }

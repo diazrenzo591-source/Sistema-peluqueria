@@ -1,5 +1,7 @@
 let servicios = JSON.parse(localStorage.getItem("servicios")) || [];
 
+let servicioEditarIndex = null;
+
 
 
 function mostrarServicio(){
@@ -67,6 +69,11 @@ JSON.stringify(servicios)
 mostrarServicios();
 
 
+document.getElementById("nombreServicio").value = "";
+document.getElementById("precioServicio").value = "";
+document.getElementById("duracionServicio").value = "";
+
+
 }
 
 
@@ -84,7 +91,7 @@ tabla.innerHTML="";
 
 
 
-servicios.forEach(function(servicio){
+servicios.forEach(function(servicio,index){
 
 
 tabla.innerHTML += `
@@ -97,12 +104,101 @@ tabla.innerHTML += `
 
 <td>${servicio.duracion} min</td>
 
+<td>
+
+<button onclick="editarServicio(${index})">✏️ Editar</button>
+
+<button onclick="eliminarServicio(${index})">🗑️ Eliminar</button>
+
+</td>
+
 
 </tr>
 
 `;
 
 });
+
+
+}
+
+
+
+function editarServicio(index){
+
+servicioEditarIndex = index;
+
+let servicio = servicios[index];
+
+
+document.getElementById("editarNombreServicio").value = servicio.nombre;
+document.getElementById("editarPrecioServicio").value = servicio.precio;
+document.getElementById("editarDuracionServicio").value = servicio.duracion;
+
+
+document.getElementById("formEditarServicio").style.display = "block";
+
+
+}
+
+
+
+function guardarEdicionServicio(){
+
+
+if(servicioEditarIndex === null) return;
+
+
+let servicio = servicios[servicioEditarIndex];
+
+
+servicio.nombre = document.getElementById("editarNombreServicio").value;
+servicio.precio = document.getElementById("editarPrecioServicio").value;
+servicio.duracion = document.getElementById("editarDuracionServicio").value;
+
+
+localStorage.setItem(
+"servicios",
+JSON.stringify(servicios)
+);
+
+
+document.getElementById("formEditarServicio").style.display = "none";
+
+servicioEditarIndex = null;
+
+
+mostrarServicios();
+
+
+alert("Servicio actualizado");
+
+
+}
+
+
+
+function eliminarServicio(index){
+
+
+let confirmar = confirm(
+"¿Seguro que querés eliminar este servicio?"
+);
+
+
+if(!confirmar) return;
+
+
+servicios.splice(index,1);
+
+
+localStorage.setItem(
+"servicios",
+JSON.stringify(servicios)
+);
+
+
+mostrarServicios();
 
 
 }
