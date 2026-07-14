@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SalonMind - Portal de Empleados</title>
+
+<link rel="stylesheet" href="css/style.css">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabaseClient.js"></script>
+</head>
+<body>
+
+<div class="login">
+
+<h1>Portal de Empleados</h1>
+<p>Ingresá con los datos que te dio tu empleador</p>
+
+<input type="text" id="codigoLocal" placeholder="Código del local">
+
+<input type="text" id="usuario" placeholder="Usuario">
+
+<input type="password" id="clave" placeholder="Contraseña">
+
+<button onclick="loginEmpleado()">Ingresar</button>
+
+</div>
+
+<script src="js/empleadoAuth.js"></script>
+
+</body>
+</html>

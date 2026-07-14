@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mi Perfil - SalonMind</title>
+
+<link rel="stylesheet" href="css/style.css">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabaseClient.js"></script>
+<script src="js/empleadoSesion.js"></script>
+</head>
+<body>
+
+<div class="topbar">
+
+<h2>Mi Portal - SalonMind</h2>
+
+<nav>
+<a href="#" title="Cerrar sesión" onclick="logoutEmpleado()">🚪</a>
+</nav>
+
+</div>
+
+<div class="main">
+
+<div class="card">
+
+<h1 id="nombreEmpleado"></h1>
+
+<input type="file"
+id="fotoEmpleado"
+accept="image/*"
+onchange="subirFotoEmpleado(event)">
+
+<img id="imagenEmpleado"
+style="width:170px;border-radius:50%;margin:20px 0;">
+
+<p><strong>Especialidad</strong></p>
+
+<input id="especialidad" placeholder="Ej: Barbero, Colorista">
+
+<p><strong>DNI</strong></p>
+
+<input id="dni" placeholder="Tu número de DNI">
+
+<p><strong>Experiencia</strong></p>
+
+<textarea id="experiencia" placeholder="Contá tu experiencia, años trabajando, especialidades, etc."></textarea>
+
+<button class="btn" onclick="guardarPerfil()">💾 Guardar cambios</button>
+
+</div>
+
+<div class="cards">
+
+<div class="card">
+
+<h2 id="clientesAtendidos">0</h2>
+
+<p>Clientes atendidos</p>
+
+</div>
+
+<div class="card">
+
+<h2 id="facturacionEmpleado">$0</h2>
+
+<p>Facturación generada</p>
+
+</div>
+
+<div class="card">
+
+<h2 id="comisionEmpleado">$0</h2>
+
+<p>Mis comisiones</p>
+
+</div>
+
+</div>
+
+</div>
+
+<script src="js/empleadoPanel.js"></script>
+
+</body>
+</html>
