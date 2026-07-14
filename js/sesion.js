@@ -6,23 +6,30 @@ window.location = "index.html";
 
 }else{
 
-// Verificación remota: si el local fue bloqueado, se cierra la sesión
+verificarLicencia();
+
+}
+
+
+async function verificarLicencia(){
 
 let codigoLocal = localStorage.getItem("codigoLocal");
 
-fetch(LICENCIAS_URL + "?t=" + Date.now())
 
-.then(function(res){
+try{
 
-return res.json();
+let { data, error } = await supabase
 
-})
+.from("locales")
 
-.then(function(licencias){
+.select("estado")
 
-let estado = licencias[codigoLocal];
+.eq("codigo", codigoLocal)
 
-if(estado != "activo"){
+.single();
+
+
+if(error || !data || data.estado != "activo"){
 
 alert("El servicio de este local fue suspendido. Contactate con el proveedor del sistema.");
 
@@ -34,16 +41,14 @@ window.location = "index.html";
 
 }
 
-})
+}catch(e){
 
-.catch(function(error){
-
-// Si no hay internet o falla la consulta, se deja seguir usando
-// para no bloquear el trabajo diario por un problema de conexión
+// Si falla la conexión, se deja seguir usando para no trabar
+// el trabajo diario por un problema de internet
 
 console.log("No se pudo verificar la licencia en este momento.");
 
-});
+}
 
 }
 
