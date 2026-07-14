@@ -18,7 +18,7 @@ let codigoLocal = localStorage.getItem("codigoLocal");
 
 try{
 
-let { data, error } = await supabase
+let { data, error } = await sbClient
 
 .from("locales")
 
@@ -42,9 +42,6 @@ window.location = "index.html";
 }
 
 }catch(e){
-
-// Si falla la conexión, se deja seguir usando para no trabar
-// el trabajo diario por un problema de internet
 
 console.log("No se pudo verificar la licencia en este momento.");
 

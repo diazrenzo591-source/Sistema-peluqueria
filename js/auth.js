@@ -14,7 +14,7 @@ return;
 }
 
 
-let { data, error } = await supabase
+let { data, error } = await sbClient
 
 .from("locales")
 
