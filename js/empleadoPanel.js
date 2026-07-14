@@ -1,4 +1,4 @@
-let empleadoId = localStorage.getItem("empleadoSeleccionado");
+let empleadoId = localStorage.getItem("empleadoId");
 
 let empleadoActual = null;
 
@@ -20,7 +20,7 @@ let { data, error } = await sbClient
 
 if(error || !data){
 
-alert("No se pudo cargar el perfil del empleado");
+alert("No se pudo cargar tu perfil");
 
 return;
 
@@ -33,6 +33,10 @@ empleadoActual = data;
 document.getElementById("nombreEmpleado").innerHTML = data.nombre;
 
 document.getElementById("especialidad").value = data.especialidad || "";
+
+document.getElementById("dni").value = data.dni || "";
+
+document.getElementById("experiencia").value = data.experiencia || "";
 
 document.getElementById("comisionEmpleado").innerHTML =
 "$"+(data.ganancias || 0);
@@ -55,7 +59,7 @@ calcularEstadisticas(data.nombre);
 function calcularEstadisticas(nombreEmpleado){
 
 
-// Los turnos todavía viven en localStorage (los migramos en el próximo paso)
+// Los turnos todavía viven en localStorage del local (los migramos después)
 
 let turnos = JSON.parse(localStorage.getItem("turnos")) || [];
 
@@ -87,20 +91,28 @@ document.getElementById("facturacionEmpleado").innerHTML = "$"+total;
 
 
 
-async function guardarEspecialidad(){
+async function guardarPerfil(){
 
 
 if(!empleadoActual) return;
 
 
 let especialidad = document.getElementById("especialidad").value;
+let dni = document.getElementById("dni").value;
+let experiencia = document.getElementById("experiencia").value;
 
 
 let { error } = await sbClient
 
 .from("empleados")
 
-.update({ especialidad: especialidad })
+.update({
+
+especialidad: especialidad,
+dni: dni,
+experiencia: experiencia
+
+})
 
 .eq("id", empleadoActual.id);
 
@@ -114,10 +126,7 @@ return;
 }
 
 
-empleadoActual.especialidad = especialidad;
-
-
-alert("Especialidad guardada.");
+alert("Perfil actualizado");
 
 
 }

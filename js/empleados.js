@@ -1,9 +1,6 @@
+let codigoLocal = localStorage.getItem("codigoLocal");
 
-let empleados = JSON.parse(
-localStorage.getItem("empleados")
-) || [];
-
-let empleadoEditarIndex = null;
+let empleadoEditarId = null;
 
 
 
@@ -12,22 +9,14 @@ function mostrarEmpleado(){
 let formulario =
 document.getElementById("formEmpleado");
 
-
-if(formulario.style.display=="block"){
-
-formulario.style.display="none";
-
-}else{
-
-formulario.style.display="block";
-
-}
+formulario.style.display =
+formulario.style.display=="block" ? "none" : "block";
 
 }
 
 
 
-function guardarEmpleado(){
+async function guardarEmpleado(){
 
 
 let nombre =
@@ -36,6 +25,14 @@ document.getElementById("nombreEmpleado").value;
 
 let comision =
 document.getElementById("comisionEmpleado").value;
+
+
+let usuario =
+document.getElementById("usuarioEmpleado").value.trim();
+
+
+let clave =
+document.getElementById("claveEmpleado").value;
 
 
 
@@ -48,36 +45,64 @@ return;
 }
 
 
+if(usuario==""){
 
-empleados.push({
+alert("Ingresá un usuario para que el empleado pueda ingresar a su portal");
 
-nombre,
-comision,
-ganancias:0
+return;
+
+}
+
+
+if(clave==""){
+
+alert("Ingresá una contraseña para el empleado");
+
+return;
+
+}
+
+
+
+let { error } = await sbClient
+
+.from("empleados")
+
+.insert({
+
+codigo_local: codigoLocal,
+nombre: nombre,
+comision: comision,
+ganancias: 0,
+usuario: usuario,
+contrasena: clave
 
 });
 
 
+if(error){
 
-localStorage.setItem(
-"empleados",
-JSON.stringify(empleados)
-);
+alert("Error al guardar: " + error.message);
 
+return;
 
-
-mostrarEmpleados();
+}
 
 
 document.getElementById("nombreEmpleado").value = "";
 document.getElementById("comisionEmpleado").value = "";
+document.getElementById("usuarioEmpleado").value = "";
+document.getElementById("claveEmpleado").value = "";
+
+
+mostrarEmpleados();
 
 
 }
 
 
 
-function mostrarEmpleados(){
+async function mostrarEmpleados(){
 
 
 let tabla =
@@ -87,11 +112,33 @@ document.getElementById("tablaEmpleados");
 if(!tabla)return;
 
 
+let { data, error } = await sbClient
+
+.from("empleados")
+
+.select("*")
+
+.eq("codigo_local", codigoLocal)
+
+.order("nombre");
+
+
+if(error){
+
+console.error(error);
+
+tabla.innerHTML = `<tr><td colspan="5">Error al cargar empleados</td></tr>`;
+
+return;
+
+}
+
+
 tabla.innerHTML="";
 
 
 
-empleados.forEach((e,index)=>{
+data.forEach(e=>{
 
 
 tabla.innerHTML += `
@@ -105,16 +152,16 @@ tabla.innerHTML += `
 <td>$${e.ganancias}</td>
 
 <td>
-<button onclick="abrirPerfil(${index})">
+<button onclick="abrirPerfil('${e.id}')">
 👤 Perfil
 </button>
 </td>
 
 <td>
 
-<button onclick="editarEmpleado(${index})">✏️ Editar</button>
+<button onclick="editarEmpleado('${e.id}')">✏️ Editar</button>
 
-<button onclick="eliminarEmpleado(${index})">🗑️ Eliminar</button>
+<button onclick="eliminarEmpleado('${e.id}')">🗑️ Eliminar</button>
 
 </td>
 
@@ -131,11 +178,11 @@ tabla.innerHTML += `
 mostrarEmpleados();
 
 
-function abrirPerfil(index){
+function abrirPerfil(id){
 
 localStorage.setItem(
 "empleadoSeleccionado",
-empleados[index].nombre
+id
 );
 
 window.location.href =
@@ -145,15 +192,35 @@ window.location.href =
 
 
 
-function editarEmpleado(index){
+async function editarEmpleado(id){
 
-empleadoEditarIndex = index;
-
-let empleado = empleados[index];
+empleadoEditarId = id;
 
 
-document.getElementById("editarNombreEmpleado").value = empleado.nombre;
-document.getElementById("editarComisionEmpleado").value = empleado.comision;
+let { data, error } = await sbClient
+
+.from("empleados")
+
+.select("*")
+
+.eq("id", id)
+
+.single();
+
+
+if(error || !data){
+
+alert("No se pudo cargar el empleado");
+
+return;
+
+}
+
+
+document.getElementById("editarNombreEmpleado").value = data.nombre;
+document.getElementById("editarComisionEmpleado").value = data.comision;
+document.getElementById("editarUsuarioEmpleado").value = data.usuario || "";
+document.getElementById("editarClaveEmpleado").value = "";
 
 
 document.getElementById("formEditarEmpleado").style.display = "block";
@@ -163,28 +230,55 @@ document.getElementById("formEditarEmpleado").style.display = "block";
 
 
 
-function guardarEdicionEmpleado(){
+async function guardarEdicionEmpleado(){
 
 
-if(empleadoEditarIndex === null) return;
+if(!empleadoEditarId) return;
 
 
-let empleado = empleados[empleadoEditarIndex];
+let nombre = document.getElementById("editarNombreEmpleado").value;
+let comision = document.getElementById("editarComisionEmpleado").value;
+let usuario = document.getElementById("editarUsuarioEmpleado").value.trim();
+let clave = document.getElementById("editarClaveEmpleado").value;
 
 
-empleado.nombre = document.getElementById("editarNombreEmpleado").value;
-empleado.comision = document.getElementById("editarComisionEmpleado").value;
+let cambios = {
+
+nombre: nombre,
+comision: comision,
+usuario: usuario
+
+};
 
 
-localStorage.setItem(
-"empleados",
-JSON.stringify(empleados)
-);
+if(clave != ""){
+
+cambios.contrasena = clave;
+
+}
+
+
+let { error } = await sbClient
+
+.from("empleados")
+
+.update(cambios)
+
+.eq("id", empleadoEditarId);
+
+
+if(error){
+
+alert("Error al actualizar: " + error.message);
+
+return;
+
+}
 
 
 document.getElementById("formEditarEmpleado").style.display = "none";
 
-empleadoEditarIndex = null;
+empleadoEditarId = null;
 
 
 mostrarEmpleados();
@@ -197,7 +291,7 @@ alert("Empleado actualizado");
 
 
 
-function eliminarEmpleado(index){
+async function eliminarEmpleado(id){
 
 
 let confirmar = confirm(
@@ -208,13 +302,22 @@ let confirmar = confirm(
 if(!confirmar) return;
 
 
-empleados.splice(index,1);
+let { error } = await sbClient
+
+.from("empleados")
+
+.delete()
+
+.eq("id", id);
 
 
-localStorage.setItem(
-"empleados",
-JSON.stringify(empleados)
-);
+if(error){
+
+alert("Error al eliminar: " + error.message);
+
+return;
+
+}
 
 
 mostrarEmpleados();

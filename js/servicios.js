@@ -1,6 +1,6 @@
-let servicios = JSON.parse(localStorage.getItem("servicios")) || [];
+let codigoLocal = localStorage.getItem("codigoLocal");
 
-let servicioEditarIndex = null;
+let servicioEditarId = null;
 
 
 
@@ -8,23 +8,15 @@ function mostrarServicio(){
 
 let formulario = document.getElementById("formServicio");
 
-
-if(formulario.style.display=="block"){
-
-formulario.style.display="none";
-
-}else{
-
-formulario.style.display="block";
-
-}
+formulario.style.display =
+formulario.style.display=="block" ? "none" : "block";
 
 }
 
 
 
 
-function guardarServicio(){
+async function guardarServicio(){
 
 
 let nombre = document.getElementById("nombreServicio").value;
@@ -45,28 +37,27 @@ return;
 
 
 
-let servicio = {
+let { error } = await sbClient
 
-nombre,
-precio,
-duracion
+.from("servicios")
 
-};
+.insert({
 
+codigo_local: codigoLocal,
+nombre: nombre,
+precio: precio,
+duracion: duracion
 
-
-servicios.push(servicio);
-
-
-
-localStorage.setItem(
-"servicios",
-JSON.stringify(servicios)
-);
+});
 
 
+if(error){
 
-mostrarServicios();
+alert("Error al guardar: " + error.message);
+
+return;
+
+}
 
 
 document.getElementById("nombreServicio").value = "";
@@ -74,11 +65,14 @@ document.getElementById("precioServicio").value = "";
 document.getElementById("duracionServicio").value = "";
 
 
+mostrarServicios();
+
+
 }
 
 
 
-function mostrarServicios(){
+async function mostrarServicios(){
 
 
 let tabla = document.getElementById("tablaServicios");
@@ -87,11 +81,31 @@ let tabla = document.getElementById("tablaServicios");
 if(!tabla)return;
 
 
+let { data, error } = await sbClient
+
+.from("servicios")
+
+.select("*")
+
+.eq("codigo_local", codigoLocal)
+
+.order("nombre");
+
+
+if(error){
+
+console.error(error);
+
+return;
+
+}
+
+
 tabla.innerHTML="";
 
 
 
-servicios.forEach(function(servicio,index){
+data.forEach(function(servicio){
 
 
 tabla.innerHTML += `
@@ -106,9 +120,9 @@ tabla.innerHTML += `
 
 <td>
 
-<button onclick="editarServicio(${index})">✏️ Editar</button>
+<button onclick="editarServicio('${servicio.id}')">✏️ Editar</button>
 
-<button onclick="eliminarServicio(${index})">🗑️ Eliminar</button>
+<button onclick="eliminarServicio('${servicio.id}')">🗑️ Eliminar</button>
 
 </td>
 
@@ -124,16 +138,28 @@ tabla.innerHTML += `
 
 
 
-function editarServicio(index){
+async function editarServicio(id){
 
-servicioEditarIndex = index;
-
-let servicio = servicios[index];
+servicioEditarId = id;
 
 
-document.getElementById("editarNombreServicio").value = servicio.nombre;
-document.getElementById("editarPrecioServicio").value = servicio.precio;
-document.getElementById("editarDuracionServicio").value = servicio.duracion;
+let { data, error } = await sbClient
+
+.from("servicios")
+
+.select("*")
+
+.eq("id", id)
+
+.single();
+
+
+if(error || !data) return;
+
+
+document.getElementById("editarNombreServicio").value = data.nombre;
+document.getElementById("editarPrecioServicio").value = data.precio;
+document.getElementById("editarDuracionServicio").value = data.duracion;
 
 
 document.getElementById("formEditarServicio").style.display = "block";
@@ -143,29 +169,39 @@ document.getElementById("formEditarServicio").style.display = "block";
 
 
 
-function guardarEdicionServicio(){
+async function guardarEdicionServicio(){
 
 
-if(servicioEditarIndex === null) return;
+if(!servicioEditarId) return;
 
 
-let servicio = servicios[servicioEditarIndex];
+let { error } = await sbClient
+
+.from("servicios")
+
+.update({
+
+nombre: document.getElementById("editarNombreServicio").value,
+precio: document.getElementById("editarPrecioServicio").value,
+duracion: document.getElementById("editarDuracionServicio").value
+
+})
+
+.eq("id", servicioEditarId);
 
 
-servicio.nombre = document.getElementById("editarNombreServicio").value;
-servicio.precio = document.getElementById("editarPrecioServicio").value;
-servicio.duracion = document.getElementById("editarDuracionServicio").value;
+if(error){
 
+alert("Error al actualizar: " + error.message);
 
-localStorage.setItem(
-"servicios",
-JSON.stringify(servicios)
-);
+return;
+
+}
 
 
 document.getElementById("formEditarServicio").style.display = "none";
 
-servicioEditarIndex = null;
+servicioEditarId = null;
 
 
 mostrarServicios();
@@ -178,7 +214,7 @@ alert("Servicio actualizado");
 
 
 
-function eliminarServicio(index){
+async function eliminarServicio(id){
 
 
 let confirmar = confirm(
@@ -189,13 +225,22 @@ let confirmar = confirm(
 if(!confirmar) return;
 
 
-servicios.splice(index,1);
+let { error } = await sbClient
+
+.from("servicios")
+
+.delete()
+
+.eq("id", id);
 
 
-localStorage.setItem(
-"servicios",
-JSON.stringify(servicios)
-);
+if(error){
+
+alert("Error al eliminar: " + error.message);
+
+return;
+
+}
 
 
 mostrarServicios();

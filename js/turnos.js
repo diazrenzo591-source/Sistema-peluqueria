@@ -1,12 +1,10 @@
-let turnos = JSON.parse(localStorage.getItem("turnos")) || [];
-
 let clientesGuardados = JSON.parse(localStorage.getItem("clientes")) || [];
 
-let serviciosGuardados = JSON.parse(localStorage.getItem("servicios")) || [];
+let codigoLocal = localStorage.getItem("codigoLocal");
 
-let empleadosGuardados = JSON.parse(localStorage.getItem("empleados")) || [];
+let turnoEditId = null;
 
-let turnoEditIndex = null;
+let turnosCache = [];
 
 
 // Mostrar / ocultar formulario
@@ -20,11 +18,11 @@ if(formulario.style.display=="block"){
 
 formulario.style.display="none";
 
-turnoEditIndex = null;
+turnoEditId = null;
 
 }else{
 
-turnoEditIndex = null;
+turnoEditId = null;
 
 limpiarFormularioTurno();
 
@@ -53,7 +51,7 @@ document.getElementById("formaPago").value = "Efectivo";
 
 // Guardar turno (nuevo o editado)
 
-function guardarTurno(){
+async function guardarTurno(){
 
 
 let cliente = document.getElementById("cliente").value;
@@ -103,9 +101,6 @@ return;
 }
 
 
-// Si el cliente está bloqueado, avisar antes de continuar
-// (esto no afecta a ningún otro cliente, solo a este)
-
 let clienteInfo = clientesGuardados.find(
 c => c.nombre == cliente.replace("🔒 ","")
 );
@@ -122,29 +117,15 @@ if(!continuar) return;
 }
 
 
-
-let nuevoTurno = {
-
-cliente:cliente,
-fecha:fecha,
-hora:hora,
-servicio:servicio,
-profesional:profesional,
-estado:estado,
-precio:precio,
-formaPago:formaPago
-
-};
-
 // Verificar si el profesional ya tiene un turno (ignorando el turno que se está editando)
 
-let ocupado = turnos.find((t,i) =>
+let ocupado = turnosCache.find(t =>
 
 t.fecha == fecha &&
 t.hora == hora &&
 t.profesional == profesional &&
 t.estado != "Cancelado" &&
-i != turnoEditIndex
+t.id != turnoEditId
 
 );
 
@@ -156,13 +137,14 @@ alert("Ese profesional ya tiene un turno en ese horario.");
 return;
 
 }
-let clienteOcupado = turnos.find((t,i) =>
+
+let clienteOcupado = turnosCache.find(t =>
 
 t.fecha == fecha &&
 t.hora == hora &&
 t.cliente == cliente &&
 t.estado != "Cancelado" &&
-i != turnoEditIndex
+t.id != turnoEditId
 
 );
 
@@ -176,30 +158,63 @@ return;
 }
 
 
-if(turnoEditIndex !== null){
+let datosTurno = {
 
-turnos[turnoEditIndex] = nuevoTurno;
+codigo_local: codigoLocal,
+cliente: cliente,
+fecha: fecha,
+hora: hora,
+servicio: servicio,
+profesional: profesional,
+estado: estado,
+precio: precio,
+forma_pago: formaPago
 
-turnoEditIndex = null;
+};
+
+
+let error;
+
+
+if(turnoEditId !== null){
+
+let resultado = await sbClient
+
+.from("turnos")
+
+.update(datosTurno)
+
+.eq("id", turnoEditId);
+
+error = resultado.error;
+
+turnoEditId = null;
 
 }else{
 
-turnos.push(nuevoTurno);
+let resultado = await sbClient
+
+.from("turnos")
+
+.insert(datosTurno);
+
+error = resultado.error;
 
 }
 
-localStorage.setItem(
-"turnos",
-JSON.stringify(turnos)
-);
+
+if(error){
+
+alert("Error al guardar el turno: " + error.message);
+
+return;
+
+}
 
 
-
-mostrarTurnos();
+await mostrarTurnos();
 
 mostrarTurno();
-
-
 
 alert("Turno guardado");
 
@@ -210,7 +225,7 @@ alert("Turno guardado");
 
 // Mostrar turnos
 
-function mostrarTurnos(){
+async function mostrarTurnos(){
 
 
 let tabla = document.getElementById("tablaTurnos");
@@ -219,12 +234,38 @@ let tabla = document.getElementById("tablaTurnos");
 if(!tabla)return;
 
 
+let { data, error } = await sbClient
+
+.from("turnos")
+
+.select("*")
+
+.eq("codigo_local", codigoLocal)
+
+.order("fecha", { ascending:false })
+
+.order("hora", { ascending:true });
+
+
+if(error){
+
+console.error(error);
+
+tabla.innerHTML = `<tr><td colspan="6">Error al cargar turnos</td></tr>`;
+
+return;
+
+}
+
+
+turnosCache = data;
+
 
 tabla.innerHTML="";
 
 
 
-turnos.forEach((turno,index)=>{
+data.forEach((turno)=>{
 
 
 let acciones = "";
@@ -232,14 +273,14 @@ let acciones = "";
 
 if(turno.estado!="Finalizado" && turno.estado!="Cancelado"){
 
-acciones += `<button onclick="editarTurno(${index})">✏️</button> `;
-acciones += `<button onclick="finalizarTurno(${index})">✅ Finalizar</button> `;
-acciones += `<button onclick="cancelarTurno(${index})">🚫 Cancelar</button> `;
+acciones += `<button onclick="editarTurno('${turno.id}')">✏️</button> `;
+acciones += `<button onclick="finalizarTurno('${turno.id}')">✅ Finalizar</button> `;
+acciones += `<button onclick="cancelarTurno('${turno.id}')">🚫 Cancelar</button> `;
 
 }
 
 
-acciones += `<button onclick="recordarTurno(${index})">📲</button>`;
+acciones += `<button onclick="recordarTurno('${turno.id}')">📲</button>`;
 
 
 tabla.innerHTML += `
@@ -247,7 +288,7 @@ tabla.innerHTML += `
 <tr>
 
 
-<td>${turno.hora}</td>
+<td>${turno.fecha} ${turno.hora}</td>
 
 
 <td>${turno.cliente}</td>
@@ -324,9 +365,9 @@ ${cliente.bloqueado ? "🔒 " : ""}${cliente.nombre}
 
 
 
-// Cargar servicios
+// Cargar servicios desde Supabase
 
-function cargarServicios(){
+async function cargarServicios(){
 
 
 let select = document.getElementById("servicio");
@@ -334,6 +375,16 @@ let select = document.getElementById("servicio");
 
 if(!select)return;
 
+
+let { data, error } = await sbClient
+
+.from("servicios")
+
+.select("*")
+
+.eq("codigo_local", codigoLocal)
+
+.order("nombre");
 
 
 select.innerHTML = `
@@ -345,13 +396,22 @@ Seleccionar servicio
 `;
 
 
+if(error){
 
-serviciosGuardados.forEach(function(servicio){
+console.error(error);
+
+return;
+
+}
+
+
+
+data.forEach(function(servicio){
 
 
 select.innerHTML += `
 
-<option value="${servicio.nombre}">
+<option value="${servicio.nombre}" data-precio="${servicio.precio}">
 
 ${servicio.nombre} - $${servicio.precio}
 
@@ -366,9 +426,9 @@ ${servicio.nombre} - $${servicio.precio}
 
 
 
-// Cargar profesionales (empleados guardados)
+// Cargar profesionales (empleados guardados en Supabase)
 
-function cargarProfesionales(){
+async function cargarProfesionales(){
 
 
 let select = document.getElementById("profesional");
@@ -376,6 +436,16 @@ let select = document.getElementById("profesional");
 
 if(!select)return;
 
+
+let { data, error } = await sbClient
+
+.from("empleados")
+
+.select("nombre")
+
+.eq("codigo_local", codigoLocal)
+
+.order("nombre");
 
 
 select.innerHTML = `
@@ -387,8 +457,17 @@ Seleccionar profesional
 `;
 
 
+if(error){
 
-empleadosGuardados.forEach(function(empleado){
+console.error(error);
+
+return;
+
+}
+
+
+
+data.forEach(function(empleado){
 
 
 select.innerHTML += `
@@ -419,22 +498,14 @@ if(servicioSelect){
 servicioSelect.addEventListener("change",function(){
 
 
-let nombre=this.value;
+let opcion = this.options[this.selectedIndex];
+
+let precio = opcion.getAttribute("data-precio");
 
 
+if(precio){
 
-let servicio = serviciosGuardados.find(
-s=>s.nombre==nombre
-);
-
-
-
-if(servicio){
-
-
-document.getElementById("precioTurno").value =
-servicio.precio;
-
+document.getElementById("precioTurno").value = precio;
 
 }
 
@@ -448,12 +519,14 @@ servicio.precio;
 
 // Editar turno existente
 
-function editarTurno(index){
+function editarTurno(id){
 
 
-let turno = turnos[index];
+let turno = turnosCache.find(t=>t.id==id);
 
-turnoEditIndex = index;
+if(!turno) return;
+
+turnoEditId = id;
 
 
 document.getElementById("cliente").value = turno.cliente;
@@ -463,7 +536,7 @@ document.getElementById("servicio").value = turno.servicio;
 document.getElementById("precioTurno").value = turno.precio;
 document.getElementById("profesional").value = turno.profesional;
 document.getElementById("estado").value = turno.estado;
-document.getElementById("formaPago").value = turno.formaPago;
+document.getElementById("formaPago").value = turno.forma_pago;
 
 
 document.getElementById("formTurno").style.display = "block";
@@ -475,7 +548,7 @@ document.getElementById("formTurno").style.display = "block";
 
 // Cancelar turno
 
-function cancelarTurno(index){
+async function cancelarTurno(id){
 
 
 let confirmar = confirm(
@@ -486,13 +559,22 @@ let confirmar = confirm(
 if(!confirmar) return;
 
 
-turnos[index].estado = "Cancelado";
+let { error } = await sbClient
+
+.from("turnos")
+
+.update({ estado:"Cancelado" })
+
+.eq("id", id);
 
 
-localStorage.setItem(
-"turnos",
-JSON.stringify(turnos)
-);
+if(error){
+
+alert("Error al cancelar: " + error.message);
+
+return;
+
+}
 
 
 mostrarTurnos();
@@ -504,10 +586,12 @@ mostrarTurnos();
 
 // Enviar recordatorio por WhatsApp
 
-function recordarTurno(index){
+function recordarTurno(id){
 
 
-let turno = turnos[index];
+let turno = turnosCache.find(t=>t.id==id);
+
+if(!turno) return;
 
 
 let cliente = clientesGuardados.find(
@@ -544,29 +628,45 @@ window.open(url,"_blank");
 
 // Finalizar turno
 
-function finalizarTurno(index){
+async function finalizarTurno(id){
 
 
-let turno = turnos[index];
+let turno = turnosCache.find(t=>t.id==id);
+
+if(!turno) return;
 
 
+let { error: errorTurno } = await sbClient
 
-turno.estado="Finalizado";
+.from("turnos")
 
+.update({ estado:"Finalizado" })
+
+.eq("id", id);
+
+
+if(errorTurno){
+
+alert("Error al finalizar: " + errorTurno.message);
+
+return;
+
+}
 
 
 // Comisión empleado
 
-let empleados = JSON.parse(
-localStorage.getItem("empleados")
-) || [];
+let { data: empleado } = await sbClient
 
+.from("empleados")
 
+.select("*")
 
-let empleado = empleados.find(
-e=>e.nombre==turno.profesional
-);
+.eq("codigo_local", codigoLocal)
 
+.eq("nombre", turno.profesional)
+
+.maybeSingle();
 
 
 if(empleado){
@@ -578,28 +678,27 @@ Number(turno.precio) *
 Number(empleado.comision) / 100;
 
 
+await sbClient
 
-empleado.ganancias = (empleado.ganancias || 0) + comision;
+.from("empleados")
 
+.update({
 
+ganancias: (Number(empleado.ganancias)||0) + comision
 
-localStorage.setItem(
-"empleados",
-JSON.stringify(empleados)
-);
+})
+
+.eq("id", empleado.id);
 
 
 }
 
 
-
-// Enviar a caja
-
+// Enviar a caja (todavía en localStorage, se migra en el próximo paso)
 
 let caja = JSON.parse(
 localStorage.getItem("caja")
 ) || [];
-
 
 
 caja.push({
@@ -612,12 +711,11 @@ profesional:turno.profesional,
 
 monto:Number(turno.precio),
 
-formaPago:turno.formaPago,
+formaPago:turno.forma_pago,
 
 fecha:new Date().toISOString()
 
 });
-
 
 
 localStorage.setItem(
@@ -626,16 +724,7 @@ JSON.stringify(caja)
 );
 
 
-
-localStorage.setItem(
-"turnos",
-JSON.stringify(turnos)
-);
-
-
-
 alert("Turno finalizado y enviado a caja");
-
 
 
 mostrarTurnos();
