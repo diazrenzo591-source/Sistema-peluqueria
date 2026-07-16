@@ -49,35 +49,44 @@ document.getElementById("imagenEmpleado").src = data.foto;
 }
 
 
-calcularEstadisticas(data.nombre);
+calcularEstadisticas(data.nombre, data.codigo_local);
 
 
 }
 
 
 
-function calcularEstadisticas(nombreEmpleado){
+async function calcularEstadisticas(nombreEmpleado, codigoLocal){
 
 
-// Los turnos todavía viven en localStorage del local (los migramos después)
+let { data: turnos, error } = await sbClient
 
-let turnos = JSON.parse(localStorage.getItem("turnos")) || [];
+.from("turnos")
+
+.select("*")
+
+.eq("codigo_local", codigoLocal)
+
+.eq("profesional", nombreEmpleado)
+
+.eq("estado", "Finalizado");
 
 
-let atendidos = turnos.filter(t=>
+if(error){
 
-t.profesional==nombreEmpleado &&
-t.estado=="Finalizado"
+console.error(error);
 
-);
+return;
+
+}
 
 
-document.getElementById("clientesAtendidos").innerHTML = atendidos.length;
+document.getElementById("clientesAtendidos").innerHTML = turnos.length;
 
 
 let total=0;
 
-atendidos.forEach(t=>{
+turnos.forEach(t=>{
 
 total += Number(t.precio);
 

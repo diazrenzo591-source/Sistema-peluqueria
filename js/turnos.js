@@ -1,10 +1,10 @@
 let clientesGuardados = JSON.parse(localStorage.getItem("clientes")) || [];
 
+let serviciosGuardados = JSON.parse(localStorage.getItem("servicios")) || [];
+
 let codigoLocal = localStorage.getItem("codigoLocal");
 
 let turnoEditId = null;
-
-let turnosCache = [];
 
 
 // Mostrar / ocultar formulario
@@ -101,6 +101,8 @@ return;
 }
 
 
+// Si el cliente está bloqueado, avisar antes de continuar
+
 let clienteInfo = clientesGuardados.find(
 c => c.nombre == cliente.replace("🔒 ","")
 );
@@ -117,17 +119,27 @@ if(!continuar) return;
 }
 
 
-// Verificar si el profesional ya tiene un turno (ignorando el turno que se está editando)
 
-let ocupado = turnosCache.find(t =>
+// Verificar que el profesional no tenga otro turno en ese horario
 
-t.fecha == fecha &&
-t.hora == hora &&
-t.profesional == profesional &&
-t.estado != "Cancelado" &&
-t.id != turnoEditId
+let { data: choqueProfesional } = await sbClient
 
-);
+.from("turnos")
+
+.select("id")
+
+.eq("codigo_local", codigoLocal)
+
+.eq("fecha", fecha)
+
+.eq("hora", hora)
+
+.eq("profesional", profesional)
+
+.neq("estado", "Cancelado");
+
+
+let ocupado = (choqueProfesional || []).some(t => t.id != turnoEditId);
 
 
 if(ocupado){
@@ -138,15 +150,28 @@ return;
 
 }
 
-let clienteOcupado = turnosCache.find(t =>
 
-t.fecha == fecha &&
-t.hora == hora &&
-t.cliente == cliente &&
-t.estado != "Cancelado" &&
-t.id != turnoEditId
 
-);
+// Verificar que el cliente no tenga otro turno en ese horario
+
+let { data: choqueCliente } = await sbClient
+
+.from("turnos")
+
+.select("id")
+
+.eq("codigo_local", codigoLocal)
+
+.eq("fecha", fecha)
+
+.eq("hora", hora)
+
+.eq("cliente", cliente)
+
+.neq("estado", "Cancelado");
+
+
+let clienteOcupado = (choqueCliente || []).some(t => t.id != turnoEditId);
 
 
 if(clienteOcupado){
@@ -158,7 +183,8 @@ return;
 }
 
 
-let datosTurno = {
+
+let nuevoTurno = {
 
 codigo_local: codigoLocal,
 cliente: cliente,
@@ -176,29 +202,25 @@ forma_pago: formaPago
 let error;
 
 
-if(turnoEditId !== null){
+if(turnoEditId){
 
-let resultado = await sbClient
+({ error } = await sbClient
 
 .from("turnos")
 
-.update(datosTurno)
+.update(nuevoTurno)
 
-.eq("id", turnoEditId);
-
-error = resultado.error;
+.eq("id", turnoEditId));
 
 turnoEditId = null;
 
 }else{
 
-let resultado = await sbClient
+({ error } = await sbClient
 
 .from("turnos")
 
-.insert(datosTurno);
-
-error = resultado.error;
+.insert(nuevoTurno));
 
 }
 
@@ -212,9 +234,12 @@ return;
 }
 
 
-await mostrarTurnos();
+
+mostrarTurnos();
 
 mostrarTurno();
+
+
 
 alert("Turno guardado");
 
@@ -242,23 +267,20 @@ let { data, error } = await sbClient
 
 .eq("codigo_local", codigoLocal)
 
-.order("fecha", { ascending:false })
+.order("fecha", { ascending: true })
 
-.order("hora", { ascending:true });
+.order("hora", { ascending: true });
 
 
 if(error){
 
 console.error(error);
 
-tabla.innerHTML = `<tr><td colspan="6">Error al cargar turnos</td></tr>`;
+tabla.innerHTML = `<tr><td colspan="7">Error al cargar los turnos</td></tr>`;
 
 return;
 
 }
-
-
-turnosCache = data;
 
 
 tabla.innerHTML="";
@@ -287,8 +309,9 @@ tabla.innerHTML += `
 
 <tr>
 
+<td>${turno.fecha}</td>
 
-<td>${turno.fecha} ${turno.hora}</td>
+<td>${turno.hora}</td>
 
 
 <td>${turno.cliente}</td>
@@ -365,9 +388,9 @@ ${cliente.bloqueado ? "🔒 " : ""}${cliente.nombre}
 
 
 
-// Cargar servicios desde Supabase
+// Cargar servicios
 
-async function cargarServicios(){
+function cargarServicios(){
 
 
 let select = document.getElementById("servicio");
@@ -375,16 +398,6 @@ let select = document.getElementById("servicio");
 
 if(!select)return;
 
-
-let { data, error } = await sbClient
-
-.from("servicios")
-
-.select("*")
-
-.eq("codigo_local", codigoLocal)
-
-.order("nombre");
 
 
 select.innerHTML = `
@@ -396,22 +409,13 @@ Seleccionar servicio
 `;
 
 
-if(error){
 
-console.error(error);
-
-return;
-
-}
-
-
-
-data.forEach(function(servicio){
+serviciosGuardados.forEach(function(servicio){
 
 
 select.innerHTML += `
 
-<option value="${servicio.nombre}" data-precio="${servicio.precio}">
+<option value="${servicio.nombre}">
 
 ${servicio.nombre} - $${servicio.precio}
 
@@ -498,14 +502,22 @@ if(servicioSelect){
 servicioSelect.addEventListener("change",function(){
 
 
-let opcion = this.options[this.selectedIndex];
-
-let precio = opcion.getAttribute("data-precio");
+let nombre=this.value;
 
 
-if(precio){
 
-document.getElementById("precioTurno").value = precio;
+let servicio = serviciosGuardados.find(
+s=>s.nombre==nombre
+);
+
+
+
+if(servicio){
+
+
+document.getElementById("precioTurno").value =
+servicio.precio;
+
 
 }
 
@@ -519,24 +531,40 @@ document.getElementById("precioTurno").value = precio;
 
 // Editar turno existente
 
-function editarTurno(id){
+async function editarTurno(id){
 
 
-let turno = turnosCache.find(t=>t.id==id);
+let { data, error } = await sbClient
 
-if(!turno) return;
+.from("turnos")
+
+.select("*")
+
+.eq("id", id)
+
+.single();
+
+
+if(error || !data){
+
+alert("No se pudo cargar el turno");
+
+return;
+
+}
+
 
 turnoEditId = id;
 
 
-document.getElementById("cliente").value = turno.cliente;
-document.getElementById("fecha").value = turno.fecha;
-document.getElementById("hora").value = turno.hora;
-document.getElementById("servicio").value = turno.servicio;
-document.getElementById("precioTurno").value = turno.precio;
-document.getElementById("profesional").value = turno.profesional;
-document.getElementById("estado").value = turno.estado;
-document.getElementById("formaPago").value = turno.forma_pago;
+document.getElementById("cliente").value = data.cliente;
+document.getElementById("fecha").value = data.fecha;
+document.getElementById("hora").value = data.hora;
+document.getElementById("servicio").value = data.servicio;
+document.getElementById("precioTurno").value = data.precio;
+document.getElementById("profesional").value = data.profesional;
+document.getElementById("estado").value = data.estado;
+document.getElementById("formaPago").value = data.forma_pago;
 
 
 document.getElementById("formTurno").style.display = "block";
@@ -563,7 +591,7 @@ let { error } = await sbClient
 
 .from("turnos")
 
-.update({ estado:"Cancelado" })
+.update({ estado: "Cancelado" })
 
 .eq("id", id);
 
@@ -586,12 +614,21 @@ mostrarTurnos();
 
 // Enviar recordatorio por WhatsApp
 
-function recordarTurno(id){
+async function recordarTurno(id){
 
 
-let turno = turnosCache.find(t=>t.id==id);
+let { data: turno, error } = await sbClient
 
-if(!turno) return;
+.from("turnos")
+
+.select("*")
+
+.eq("id", id)
+
+.single();
+
+
+if(error || !turno) return;
 
 
 let cliente = clientesGuardados.find(
@@ -631,27 +668,28 @@ window.open(url,"_blank");
 async function finalizarTurno(id){
 
 
-let turno = turnosCache.find(t=>t.id==id);
-
-if(!turno) return;
-
-
-let { error: errorTurno } = await sbClient
+let { data: turno, error } = await sbClient
 
 .from("turnos")
 
-.update({ estado:"Finalizado" })
+.select("*")
+
+.eq("id", id)
+
+.single();
+
+
+if(error || !turno) return;
+
+
+await sbClient
+
+.from("turnos")
+
+.update({ estado: "Finalizado" })
 
 .eq("id", id);
 
-
-if(errorTurno){
-
-alert("Error al finalizar: " + errorTurno.message);
-
-return;
-
-}
 
 
 // Comisión empleado
@@ -667,6 +705,7 @@ let { data: empleado } = await sbClient
 .eq("nombre", turno.profesional)
 
 .maybeSingle();
+
 
 
 if(empleado){
@@ -694,37 +733,29 @@ ganancias: (Number(empleado.ganancias)||0) + comision
 }
 
 
-// Enviar a caja (todavía en localStorage, se migra en el próximo paso)
 
-let caja = JSON.parse(
-localStorage.getItem("caja")
-) || [];
+// Enviar a caja
 
+await sbClient
 
-caja.push({
+.from("caja")
 
-cliente:turno.cliente,
+.insert({
 
-servicio:turno.servicio,
-
-profesional:turno.profesional,
-
-monto:Number(turno.precio),
-
-formaPago:turno.forma_pago,
-
-fecha:new Date().toISOString()
+codigo_local: codigoLocal,
+cliente: turno.cliente,
+servicio: turno.servicio,
+profesional: turno.profesional,
+monto: Number(turno.precio),
+forma_pago: turno.forma_pago,
+fecha: new Date().toISOString()
 
 });
 
 
-localStorage.setItem(
-"caja",
-JSON.stringify(caja)
-);
-
 
 alert("Turno finalizado y enviado a caja");
+
 
 
 mostrarTurnos();

@@ -1,9 +1,42 @@
-let caja = JSON.parse(
-localStorage.getItem("caja")
-) || [];
-
+let codigoLocal = localStorage.getItem("codigoLocal");
 
 let filtroActual = "todo";
+
+let cajaCache = [];
+
+
+
+async function cargarCaja(){
+
+
+let { data, error } = await sbClient
+
+.from("caja")
+
+.select("*")
+
+.eq("codigo_local", codigoLocal)
+
+.order("fecha", { ascending:false });
+
+
+if(error){
+
+console.error(error);
+
+return;
+
+}
+
+
+cajaCache = data;
+
+
+mostrarCaja();
+
+
+}
+
 
 
 function cambiarFiltro(){
@@ -51,7 +84,7 @@ inicioSemana.setHours(0,0,0,0);
 
 
 
-return caja.filter(pago=>{
+return cajaCache.filter(pago=>{
 
 
 let fechaPago = new Date(pago.fecha);
@@ -139,7 +172,7 @@ tabla.innerHTML += `
 
 <td>$${pago.monto}</td>
 
-<td>${pago.formaPago}</td>
+<td>${pago.forma_pago}</td>
 
 <td>${new Date(pago.fecha).toLocaleDateString()}</td>
 
@@ -247,7 +280,6 @@ tabla.innerHTML += `
 
 
 
-
 function calcularTotales(){
 
 
@@ -267,7 +299,7 @@ hoy.getDate()-7
 
 
 
-caja.forEach(pago=>{
+cajaCache.forEach(pago=>{
 
 
 let fechaPago = new Date(pago.fecha);
@@ -325,4 +357,4 @@ document.getElementById("mes").innerHTML =
 
 
 
-mostrarCaja();
+cargarCaja();

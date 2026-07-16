@@ -1,15 +1,8 @@
-let turnos = JSON.parse(
-localStorage.getItem("turnos")
-) || [];
+let codigoLocal = localStorage.getItem("codigoLocal");
 
 let hoy = new Date().toISOString().split("T")[0];
 
-let turnosHoy = turnos.filter(
-t => t.fecha == hoy && t.estado != "Cancelado"
-);
-
-let agenda =
-document.getElementById("agenda");
+let agenda = document.getElementById("agenda");
 
 
 let horas = [
@@ -30,9 +23,37 @@ let horas = [
 ];
 
 
+
+async function cargarAgenda(){
+
+
+let { data, error } = await sbClient
+
+.from("turnos")
+
+.select("*")
+
+.eq("codigo_local", codigoLocal)
+
+.eq("fecha", hoy)
+
+.neq("estado", "Cancelado");
+
+
+if(error){
+
+console.error(error);
+
+agenda.innerHTML = "<p>No se pudo cargar la agenda</p>";
+
+return;
+
+}
+
+
 horas.forEach(hora=>{
 
-let turno = turnosHoy.find(
+let turno = data.find(
 t=>t.hora==hora
 );
 
@@ -76,3 +97,9 @@ agenda.innerHTML += `
 }
 
 });
+
+
+}
+
+
+cargarAgenda();
