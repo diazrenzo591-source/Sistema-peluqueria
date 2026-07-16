@@ -1,6 +1,7 @@
-let clientes = JSON.parse(localStorage.getItem("clientes")) || [];
+let codigoLocal = localStorage.getItem("codigoLocal");
 
-let indiceEditar = null;
+let clienteEditarId = null;
+
 
 
 function mostrarFormulario(){
@@ -19,8 +20,6 @@ formulario.style.display="none";
 formulario.style.display="block";
 
 
-// Limpiar formulario
-
 document.getElementById("nombre").value="";
 document.getElementById("telefono").value="";
 document.getElementById("fecha").value="";
@@ -34,7 +33,7 @@ document.getElementById("notas").value="";
 
 
 
-function guardarCliente(){
+async function guardarCliente(){
 
 
 let nombre = document.getElementById("nombre").value;
@@ -55,20 +54,31 @@ return;
 
 
 
-clientes.push({
+let { error } = await sbClient
 
-nombre,
-telefono,
-fecha,
-servicio,
-notas
+.from("clientes")
+
+.insert({
+
+codigo_local: codigoLocal,
+nombre: nombre,
+telefono: telefono,
+fecha: fecha || null,
+servicio: servicio,
+notas: notas,
+bloqueado: false
 
 });
 
-localStorage.setItem(
-"clientes",
-JSON.stringify(clientes)
-);
+
+if(error){
+
+alert("Error al guardar: " + error.message);
+
+return;
+
+}
+
 
 mostrarClientes();
 
@@ -82,16 +92,39 @@ alert("Cliente agregado");
 
 
 
-function mostrarClientes(){
+async function mostrarClientes(){
 
 let tabla = document.getElementById("tablaClientes");
 
 if(!tabla) return;
 
+
+let { data, error } = await sbClient
+
+.from("clientes")
+
+.select("*")
+
+.eq("codigo_local", codigoLocal)
+
+.order("nombre");
+
+
+if(error){
+
+console.error(error);
+
+tabla.innerHTML = `<tr><td colspan="6">Error al cargar clientes</td></tr>`;
+
+return;
+
+}
+
+
 tabla.innerHTML="";
 
 
-clientes.forEach((cliente,index)=>{
+data.forEach((cliente)=>{
 
 
 tabla.innerHTML += `
@@ -100,9 +133,9 @@ tabla.innerHTML += `
 
 <td>${cliente.nombre}</td>
 
-<td>${cliente.telefono}</td>
+<td>${cliente.telefono || ""}</td>
 
-<td>${cliente.fecha}</td>
+<td>${cliente.fecha || ""}</td>
 
 <td>
 <span class="estado ${cliente.bloqueado ? 'Cancelado' : 'Confirmado'}">
@@ -112,17 +145,17 @@ ${cliente.bloqueado ? '🔒 Bloqueado' : '✅ Activo'}
 
 <td>
 
-<button onclick="editarCliente(${index})">
+<button onclick="editarCliente('${cliente.id}')">
 ✏️ Editar
 </button>
 
 
-<button onclick="eliminarCliente(${index})">
+<button onclick="eliminarCliente('${cliente.id}')">
 🗑️ Eliminar
 </button>
 
 
-<button onclick="toggleBloqueo(${index})">
+<button onclick="toggleBloqueo('${cliente.id}', ${cliente.bloqueado})">
 ${cliente.bloqueado ? '🔓 Desbloquear' : '🔒 Bloquear'}
 </button>
 
@@ -132,7 +165,7 @@ ${cliente.bloqueado ? '🔓 Desbloquear' : '🔒 Bloquear'}
 
 <td>
 
-<button onclick="verFicha('${cliente.nombre}')">
+<button onclick="verFicha('${cliente.id}','${cliente.nombre.replace(/'/g,"\\'")}')">
 👤 Ficha
 </button>
 
@@ -150,26 +183,40 @@ ${cliente.bloqueado ? '🔓 Desbloquear' : '🔒 Bloquear'}
 mostrarClientes();
 
 
-function toggleBloqueo(index){
 
-clientes[index].bloqueado = !clientes[index].bloqueado;
+async function toggleBloqueo(id, estadoActual){
 
-localStorage.setItem(
-"clientes",
-JSON.stringify(clientes)
-);
 
-mostrarClientes();
+let { error } = await sbClient
+
+.from("clientes")
+
+.update({ bloqueado: !estadoActual })
+
+.eq("id", id);
+
+
+if(error){
+
+alert("Error: " + error.message);
+
+return;
 
 }
 
 
-function verFicha(nombre){
+mostrarClientes();
 
-localStorage.setItem(
-"clienteActual",
-nombre
-);
+
+}
+
+
+
+function verFicha(id, nombre){
+
+localStorage.setItem("clienteActualId", id);
+
+localStorage.setItem("clienteActual", nombre);
 
 
 window.location="ficha.html";
@@ -177,43 +224,72 @@ window.location="ficha.html";
 }
 
 
-function eliminarCliente(index){
+
+async function eliminarCliente(id){
 
 let confirmar = confirm(
 "¿Seguro que querés eliminar este cliente?"
 );
 
 
-if(confirmar){
-
-clientes.splice(index,1);
+if(!confirmar) return;
 
 
-localStorage.setItem(
-"clientes",
-JSON.stringify(clientes)
-);
+let { error } = await sbClient
+
+.from("clientes")
+
+.delete()
+
+.eq("id", id);
+
+
+if(error){
+
+alert("Error al eliminar: " + error.message);
+
+return;
+
+}
 
 
 mostrarClientes();
 
-}
 
 }
 
 
 
-function editarCliente(index){
-
-indiceEditar = index;
-
-let cliente = clientes[index];
+async function editarCliente(id){
 
 
-document.getElementById("editarNombre").value = cliente.nombre;
-document.getElementById("editarTelefono").value = cliente.telefono;
-document.getElementById("editarServicio").value = cliente.servicio;
-document.getElementById("editarNotas").value = cliente.notas;
+let { data, error } = await sbClient
+
+.from("clientes")
+
+.select("*")
+
+.eq("id", id)
+
+.single();
+
+
+if(error || !data){
+
+alert("No se pudo cargar el cliente");
+
+return;
+
+}
+
+
+clienteEditarId = id;
+
+
+document.getElementById("editarNombre").value = data.nombre;
+document.getElementById("editarTelefono").value = data.telefono || "";
+document.getElementById("editarServicio").value = data.servicio || "";
+document.getElementById("editarNotas").value = data.notas || "";
 
 
 document.getElementById("formEditar").style.display="block";
@@ -223,29 +299,46 @@ document.getElementById("formEditar").style.display="block";
 
 
 
-function guardarEdicion(){
-
-if(indiceEditar===null) return;
+async function guardarEdicion(){
 
 
-let cliente = clientes[indiceEditar];
+if(!clienteEditarId) return;
 
 
-cliente.nombre = document.getElementById("editarNombre").value;
-cliente.telefono = document.getElementById("editarTelefono").value;
-cliente.servicio = document.getElementById("editarServicio").value;
-cliente.notas = document.getElementById("editarNotas").value;
+let nombre = document.getElementById("editarNombre").value;
+let telefono = document.getElementById("editarTelefono").value;
+let servicio = document.getElementById("editarServicio").value;
+let notas = document.getElementById("editarNotas").value;
 
 
-localStorage.setItem(
-"clientes",
-JSON.stringify(clientes)
-);
+let { error } = await sbClient
+
+.from("clientes")
+
+.update({
+
+nombre: nombre,
+telefono: telefono,
+servicio: servicio,
+notas: notas
+
+})
+
+.eq("id", clienteEditarId);
+
+
+if(error){
+
+alert("Error al actualizar: " + error.message);
+
+return;
+
+}
 
 
 document.getElementById("formEditar").style.display="none";
 
-indiceEditar = null;
+clienteEditarId = null;
 
 
 mostrarClientes();
@@ -255,6 +348,7 @@ alert("Cliente actualizado");
 
 
 }
+
 
 
 function buscarCliente(){

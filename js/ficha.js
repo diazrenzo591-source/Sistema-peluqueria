@@ -1,19 +1,35 @@
+let clienteId = localStorage.getItem("clienteActualId");
+
 let nombre = localStorage.getItem("clienteActual");
 
-
-let clientes = JSON.parse(
-localStorage.getItem("clientes")
-) || [];
+let cliente = null;
 
 
 
-let cliente = clientes.find(
-c => c.nombre == nombre
-);
+async function cargarCliente(){
 
 
+let { data, error } = await sbClient
 
-if(cliente){
+.from("clientes")
+
+.select("*")
+
+.eq("id", clienteId)
+
+.single();
+
+
+if(error || !data){
+
+console.error(error);
+
+return;
+
+}
+
+
+cliente = data;
 
 
 document.getElementById("nombreCliente").innerHTML =
@@ -21,18 +37,21 @@ cliente.nombre;
 
 
 document.getElementById("telefono").innerHTML =
-cliente.telefono;
+cliente.telefono || "";
 
 
 document.getElementById("servicio").innerHTML =
-cliente.servicio;
+cliente.servicio || "";
 
 
 document.getElementById("notas").innerHTML =
-cliente.notas;
+cliente.notas || "";
 
 
 }
+
+
+cargarCliente();
 
 
 

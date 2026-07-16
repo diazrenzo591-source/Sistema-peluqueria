@@ -8,6 +8,7 @@ function mostrarServicio(){
 
 let formulario = document.getElementById("formServicio");
 
+
 formulario.style.display =
 formulario.style.display=="block" ? "none" : "block";
 
@@ -96,6 +97,8 @@ if(error){
 
 console.error(error);
 
+tabla.innerHTML = `<tr><td colspan="4">Error al cargar servicios</td></tr>`;
+
 return;
 
 }
@@ -140,8 +143,6 @@ tabla.innerHTML += `
 
 async function editarServicio(id){
 
-servicioEditarId = id;
-
 
 let { data, error } = await sbClient
 
@@ -154,7 +155,16 @@ let { data, error } = await sbClient
 .single();
 
 
-if(error || !data) return;
+if(error || !data){
+
+alert("No se pudo cargar el servicio");
+
+return;
+
+}
+
+
+servicioEditarId = id;
 
 
 document.getElementById("editarNombreServicio").value = data.nombre;
@@ -175,15 +185,20 @@ async function guardarEdicionServicio(){
 if(!servicioEditarId) return;
 
 
+let nombre = document.getElementById("editarNombreServicio").value;
+let precio = document.getElementById("editarPrecioServicio").value;
+let duracion = document.getElementById("editarDuracionServicio").value;
+
+
 let { error } = await sbClient
 
 .from("servicios")
 
 .update({
 
-nombre: document.getElementById("editarNombreServicio").value,
-precio: document.getElementById("editarPrecioServicio").value,
-duracion: document.getElementById("editarDuracionServicio").value
+nombre: nombre,
+precio: precio,
+duracion: duracion
 
 })
 

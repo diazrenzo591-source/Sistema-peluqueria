@@ -1,8 +1,8 @@
-let clientesGuardados = JSON.parse(localStorage.getItem("clientes")) || [];
-
-let serviciosGuardados = JSON.parse(localStorage.getItem("servicios")) || [];
-
 let codigoLocal = localStorage.getItem("codigoLocal");
+
+let clientesCache = [];
+
+let serviciosCache = [];
 
 let turnoEditId = null;
 
@@ -103,7 +103,7 @@ return;
 
 // Si el cliente está bloqueado, avisar antes de continuar
 
-let clienteInfo = clientesGuardados.find(
+let clienteInfo = clientesCache.find(
 c => c.nombre == cliente.replace("🔒 ","")
 );
 
@@ -348,7 +348,7 @@ ${acciones}
 
 // Cargar clientes en selector
 
-function cargarClientes(){
+async function cargarClientes(){
 
 
 let select = document.getElementById("cliente");
@@ -356,6 +356,16 @@ let select = document.getElementById("cliente");
 
 if(!select)return;
 
+
+let { data, error } = await sbClient
+
+.from("clientes")
+
+.select("*")
+
+.eq("codigo_local", codigoLocal)
+
+.order("nombre");
 
 
 select.innerHTML = `
@@ -367,8 +377,19 @@ Seleccionar cliente
 `;
 
 
+if(error){
 
-clientesGuardados.forEach(function(cliente){
+console.error(error);
+
+return;
+
+}
+
+
+clientesCache = data;
+
+
+data.forEach(function(cliente){
 
 
 select.innerHTML += `
@@ -390,7 +411,7 @@ ${cliente.bloqueado ? "🔒 " : ""}${cliente.nombre}
 
 // Cargar servicios
 
-function cargarServicios(){
+async function cargarServicios(){
 
 
 let select = document.getElementById("servicio");
@@ -398,6 +419,16 @@ let select = document.getElementById("servicio");
 
 if(!select)return;
 
+
+let { data, error } = await sbClient
+
+.from("servicios")
+
+.select("*")
+
+.eq("codigo_local", codigoLocal)
+
+.order("nombre");
 
 
 select.innerHTML = `
@@ -409,8 +440,19 @@ Seleccionar servicio
 `;
 
 
+if(error){
 
-serviciosGuardados.forEach(function(servicio){
+console.error(error);
+
+return;
+
+}
+
+
+serviciosCache = data;
+
+
+data.forEach(function(servicio){
 
 
 select.innerHTML += `
@@ -506,7 +548,7 @@ let nombre=this.value;
 
 
 
-let servicio = serviciosGuardados.find(
+let servicio = serviciosCache.find(
 s=>s.nombre==nombre
 );
 
@@ -631,7 +673,7 @@ let { data: turno, error } = await sbClient
 if(error || !turno) return;
 
 
-let cliente = clientesGuardados.find(
+let cliente = clientesCache.find(
 c => c.nombre == turno.cliente
 );
 
