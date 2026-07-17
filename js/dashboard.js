@@ -1,66 +1,99 @@
-let turnos =
-JSON.parse(localStorage.getItem("turnos")) || [];
+let codigoLocal = localStorage.getItem("codigoLocal");
 
 
-let clientes =
-JSON.parse(localStorage.getItem("clientes")) || [];
 
-
-let empleados =
-JSON.parse(localStorage.getItem("empleados")) || [];
-
-
-let caja =
-JSON.parse(localStorage.getItem("caja")) || [];
+async function cargarDashboard(){
 
 
 let hoy = new Date().toISOString().split("T")[0];
 
-let turnosHoy = turnos.filter(
-t => t.fecha == hoy
-);
+
+// Turnos de hoy
+
+let { data: turnosHoy, error: errorTurnos } = await sbClient
+
+.from("turnos")
+
+.select("*")
+
+.eq("codigo_local", codigoLocal)
+
+.eq("fecha", hoy);
+
+
+if(errorTurnos) console.error(errorTurnos);
+
 
 document.getElementById("turnosHoy").innerHTML =
-turnosHoy.length;
-
-
-let total=0;
-
-caja.forEach(p=>{
-
-total += Number(p.monto);
-
-});
-
-
-document.getElementById("ingresos").innerHTML =
-"$"+total;
+(turnosHoy || []).length;
 
 
 
-document.getElementById("clientesTotal").innerHTML =
-clientes.length;
+// Ingresos totales (caja)
+
+let { data: pagos, error: errorPagos } = await sbClient
+
+.from("caja")
+
+.select("monto")
+
+.eq("codigo_local", codigoLocal);
+
+
+if(errorPagos) console.error(errorPagos);
+
+
+let total = 0;
+
+(pagos || []).forEach(p=>{ total += Number(p.monto); });
+
+
+document.getElementById("ingresos").innerHTML = "$"+total;
 
 
 
-document.getElementById("empleadosTotal").innerHTML =
-empleados.length;
+// Clientes
+
+let { count: clientesTotal } = await sbClient
+
+.from("clientes")
+
+.select("*", { count:"exact", head:true })
+
+.eq("codigo_local", codigoLocal);
+
+
+document.getElementById("clientesTotal").innerHTML = clientesTotal || 0;
 
 
 
-// Próximos turnos de hoy, ordenados por hora
+// Empleados
 
-let tablaProximos =
-document.getElementById("proximosTurnos");
+let { count: empleadosTotal } = await sbClient
+
+.from("empleados")
+
+.select("*", { count:"exact", head:true })
+
+.eq("codigo_local", codigoLocal);
+
+
+document.getElementById("empleadosTotal").innerHTML = empleadosTotal || 0;
+
+
+
+// Próximos turnos de hoy
+
+let tablaProximos = document.getElementById("proximosTurnos");
 
 
 if(tablaProximos){
 
-tablaProximos.innerHTML="";
 
+let proximos = (turnosHoy || [])
 
-let proximos = turnosHoy
 .filter(t=>t.estado!="Cancelado")
+
 .sort((a,b)=> a.hora.localeCompare(b.hora));
 
 
@@ -71,9 +104,7 @@ tablaProximos.innerHTML =
 
 }else{
 
-proximos.forEach(t=>{
-
-tablaProximos.innerHTML += `
+tablaProximos.innerHTML = proximos.map(t=>`
 
 <tr>
 <td>${t.hora}</td>
@@ -82,9 +113,7 @@ tablaProximos.innerHTML += `
 <td>${t.profesional}</td>
 </tr>
 
-`;
-
-});
+`).join("");
 
 }
 
@@ -92,77 +121,109 @@ tablaProximos.innerHTML += `
 
 
 
-// Servicios más vendidos según turnos finalizados
+// Servicios más vendidos (turnos finalizados)
 
-let contenedorTop =
-document.getElementById("serviciosTop");
+let contenedorTop = document.getElementById("serviciosTop");
 
 
 if(contenedorTop){
 
-let finalizados = turnos.filter(
-t=>t.estado=="Finalizado"
-);
+
+let { data: finalizados, error: errorFinalizados } = await sbClient
+
+.from("turnos")
+
+.select("servicio")
+
+.eq("codigo_local", codigoLocal)
+
+.eq("estado", "Finalizado");
+
+
+if(errorFinalizados) console.error(errorFinalizados);
 
 
 let conteo = {};
 
-finalizados.forEach(t=>{
 
-conteo[t.servicio] =
-(conteo[t.servicio] || 0) + 1;
+(finalizados || []).forEach(t=>{
+
+conteo[t.servicio] = (conteo[t.servicio] || 0) + 1;
 
 });
 
 
 let ranking = Object.entries(conteo)
+
 .sort((a,b)=> b[1]-a[1])
+
 .slice(0,3);
 
 
 if(ranking.length==0){
 
-contenedorTop.innerHTML =
-"<p>Sin datos todavía</p>";
+contenedorTop.innerHTML = "<p>Sin datos todavía</p>";
 
 }else{
 
 let medallas = ["🥇","🥈","🥉"];
 
 contenedorTop.innerHTML = ranking
-.map((item,index)=>
 
-`<p>${medallas[index]} ${item[0]} - ${item[1]} ventas</p>`
+.map((item,index)=> `<p>${medallas[index]} ${item[0]} - ${item[1]} ventas</p>`)
 
-).join("");
-
-}
+.join("");
 
 }
 
+}
 
 
-// Exportar todos los datos guardados en un archivo .json
-
-function exportarBackup(){
-
-let backup = {};
+}
 
 
-for(let i=0;i<localStorage.length;i++){
+cargarDashboard();
 
-let clave = localStorage.key(i);
 
-if(clave=="sesion") continue;
 
-backup[clave] = localStorage.getItem(clave);
+// Exportar backup directo desde Supabase
+
+async function exportarBackup(){
+
+
+try{
+
+
+let tablas = ["empleados","turnos","caja","clientes","servicios"];
+
+
+let backup = { codigoLocal: codigoLocal, datos: {} };
+
+
+for(let tabla of tablas){
+
+
+let { data, error } = await sbClient
+
+.from(tabla)
+
+.select("*")
+
+.eq("codigo_local", codigoLocal);
+
+
+if(error) throw error;
+
+
+backup.datos[tabla] = data;
+
 
 }
 
 
 let contenido = JSON.stringify(backup);
 
-let blob = new Blob([contenido], {type:"application/json"});
+let blob = new Blob([contenido], { type:"application/json" });
 
 let url = URL.createObjectURL(blob);
 
@@ -172,19 +233,29 @@ let link = document.createElement("a");
 link.href = url;
 
 link.download =
-"backup-salonmind-"+new Date().toISOString().split("T")[0]+".json";
+"backup-"+codigoLocal+"-"+new Date().toISOString().split("T")[0]+".json";
 
 link.click();
 
+
 URL.revokeObjectURL(url);
+
+
+}catch(error){
+
+alert("Error al generar el backup: " + error.message);
+
+}
+
 
 }
 
 
 
-// Restaurar datos desde un archivo .json exportado antes
+// Restaurar backup directo en Supabase
 
 function importarBackup(event){
+
 
 let archivo = event.target.files[0];
 
@@ -194,42 +265,86 @@ if(!archivo) return;
 let lector = new FileReader();
 
 
-lector.onload = function(){
+lector.onload = async function(){
+
 
 try{
 
-let datos = JSON.parse(lector.result);
+
+let backup = JSON.parse(lector.result);
+
+
+if(!backup.datos){
+
+alert("El archivo no tiene el formato esperado.");
+
+return;
+
+}
 
 
 let confirmar = confirm(
-"Esto va a reemplazar todos los datos actuales por los del backup. ¿Continuar?"
+"Esto va a BORRAR los datos actuales de este local en la base y reemplazarlos por los del backup. ¿Continuar?"
 );
 
 
 if(!confirmar) return;
 
 
-Object.keys(datos).forEach(clave=>{
-
-localStorage.setItem(clave, datos[clave]);
-
-});
+let tablas = ["empleados","turnos","caja","clientes","servicios"];
 
 
-alert("Backup restaurado correctamente. La página se va a recargar.");
+for(let tabla of tablas){
+
+
+await sbClient
+
+.from(tabla)
+
+.delete()
+
+.eq("codigo_local", codigoLocal);
+
+
+let filas = backup.datos[tabla];
+
+
+if(filas && filas.length > 0){
+
+
+let { error } = await sbClient
+
+.from(tabla)
+
+.insert(filas);
+
+
+if(error) throw error;
+
+
+}
+
+
+}
+
+
+alert("Backup restaurado correctamente.");
+
 
 location.reload();
 
 
 }catch(error){
 
-alert("El archivo elegido no es un backup válido.");
+alert("Error al restaurar el backup: " + error.message);
 
 }
+
 
 }
 
 
 lector.readAsText(archivo);
+
 
 }
