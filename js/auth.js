@@ -3,58 +3,72 @@ async function login(){
 try{
 
 let codigoLocal = document.getElementById("codigoLocal").value.trim();
+let password = document.getElementById("password").value;
 
 
-if(codigoLocal==""){
+if(codigoLocal=="" || password==""){
 
-alert("Ingresá el código de tu local");
+alert("Completá el código de tu local y la contraseña");
 
 return;
 
 }
 
 
-let { data, error } = await sbClient
+let email = codigoLocal + "@barberia.local";
 
-.from("locales")
 
-.select("estado")
+let { data, error } = await sbClient.auth.signInWithPassword({
 
-.eq("codigo", codigoLocal)
+email: email,
+password: password
 
-.single();
+});
 
 
 if(error){
 
-console.error(error);
-
-alert("Error al consultar la base de datos: " + error.message);
+alert("Código o contraseña incorrectos.");
 
 return;
 
 }
 
 
-if(!data){
+// Confirmar que hay un local activo asociado a esta cuenta
 
-alert("Código de local no reconocido. Verificá con el proveedor del sistema.");
+let { data: local, error: errorLocal } = await sbClient
+
+.from("locales")
+
+.select("*")
+
+.eq("codigo", codigoLocal)
+
+.maybeSingle();
+
+
+if(!local){
+
+alert("No encontramos un local asociado a esta cuenta.");
+
+await sbClient.auth.signOut();
 
 return;
 
 }
 
 
-if(data.estado != "activo"){
+if(local.estado != "activo"){
 
 alert("Este local tiene el servicio suspendido. Contactate con el proveedor del sistema.");
 
+await sbClient.auth.signOut();
+
 return;
 
 }
 
-
-localStorage.setItem("sesion","activa");
 
 localStorage.setItem("codigoLocal", codigoLocal);
 

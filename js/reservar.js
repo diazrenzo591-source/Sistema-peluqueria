@@ -74,9 +74,9 @@ cargarServicios();
 cargarProfesionales();
 
 
-document.getElementById("profesional").addEventListener("change", function(){
+document.getElementById("profesional").addEventListener("change", async function(){
 
-mostrarPerfilProfesional(this.value);
+await mostrarPerfilProfesional(this.value);
 
 actualizarHorariosDisponibles();
 
@@ -174,7 +174,7 @@ select.innerHTML += `<option value="${e.nombre}">${e.nombre}${e.especialidad ? "
 
 
 
-function mostrarPerfilProfesional(nombre){
+async function mostrarPerfilProfesional(nombre){
 
 
 let contenedor = document.getElementById("perfilProfesional");
@@ -191,6 +191,42 @@ return;
 }
 
 
+let { data: trabajos } = await sbClient
+
+.from("trabajos")
+
+.select("*")
+
+.eq("empleado_id", empleado.id)
+
+.order("fecha", { ascending:false })
+
+.limit(6);
+
+
+let galeriaHTML = "";
+
+
+if(trabajos && trabajos.length > 0){
+
+galeriaHTML = `<p style="margin-top:10px;"><strong>Sus trabajos</strong></p>
+<div style="display:flex;gap:8px;overflow-x:auto;margin-top:5px;">` +
+
+trabajos.map(t=>{
+
+return t.tipo=="video"
+
+? `<video src="${t.url_despues}" style="width:90px;height:90px;object-fit:cover;border-radius:10px;flex-shrink:0;" muted></video>`
+
+: `<img src="${t.url_despues}" style="width:90px;height:90px;object-fit:cover;border-radius:10px;flex-shrink:0;">`;
+
+}).join("") +
+
+`</div>`;
+
+}
+
+
 contenedor.innerHTML = `
 
 <div class="card" style="margin:15px 0;">
@@ -203,7 +239,7 @@ ${empleado.especialidad ? `<p>✂️ ${empleado.especialidad}</p>` : ""}
 
 ${empleado.experiencia ? `<p>${empleado.experiencia}</p>` : ""}
 
-<p style="color:#aaa;font-size:13px;">Próximamente vas a poder ver acá sus trabajos anteriores.</p>
+${galeriaHTML || "<p style='color:#aaa;font-size:13px;'>Todavía no subió trabajos.</p>"}
 
 </div>
 

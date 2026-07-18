@@ -16,33 +16,18 @@ return;
 }
 
 
-let { data, error } = await sbClient
+let email = codigoLocal + "-" + usuario + "@empleado.local";
 
-.from("empleados")
 
-.select("*")
+let { data, error } = await sbClient.auth.signInWithPassword({
 
-.eq("codigo_local", codigoLocal)
+email: email,
+password: clave
 
-.eq("usuario", usuario)
-
-.eq("contrasena", clave)
-
-.maybeSingle();
+});
 
 
 if(error){
-
-console.error(error);
-
-alert("Error al consultar el servicio: " + error.message);
-
-return;
-
-}
-
-
-if(!data){
 
 alert("Usuario o contraseña incorrectos.");
 
@@ -51,33 +36,33 @@ return;
 }
 
 
-// Chequear que el local siga activo, igual que en el panel de la barbería
+// Buscar el registro del empleado ligado a esta cuenta
 
-let { data: local } = await sbClient
+let { data: empleado, error: errorEmpleado } = await sbClient
 
-.from("locales")
+.from("empleados")
 
-.select("estado")
+.select("*")
 
-.eq("codigo", codigoLocal)
+.eq("auth_id", data.user.id)
 
-.single();
+.maybeSingle();
 
 
-if(!local || local.estado != "activo"){
+if(!empleado){
 
-alert("El servicio de este local está suspendido.");
+alert("No encontramos tu perfil de empleado, o tu local está suspendido.");
+
+await sbClient.auth.signOut();
 
 return;
 
 }
 
 
-localStorage.setItem("empleadoSesion","activa");
+localStorage.setItem("empleadoId", empleado.id);
 
-localStorage.setItem("empleadoId", data.id);
-
-localStorage.setItem("empleadoLocal", codigoLocal);
+localStorage.setItem("empleadoLocal", empleado.codigo_local);
 
 window.location = "empleado-panel.html";
 

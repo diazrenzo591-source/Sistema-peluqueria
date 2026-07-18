@@ -2,6 +2,8 @@ let clienteId = localStorage.getItem("clienteActualId");
 
 let nombre = localStorage.getItem("clienteActual");
 
+let codigoLocal = localStorage.getItem("codigoLocal");
+
 let cliente = null;
 
 
@@ -48,6 +50,15 @@ document.getElementById("notas").innerHTML =
 cliente.notas || "";
 
 
+mostrarVisitas();
+
+mostrarColores();
+
+mostrarEstilos();
+
+mostrarFotos();
+
+
 }
 
 
@@ -55,18 +66,15 @@ cargarCliente();
 
 
 
-let visitas = JSON.parse(
-localStorage.getItem("visitas")
-) || [];
+// Visitas
 
-
-
-function agregarVisita(){
+async function agregarVisita(){
 
 
 let visita = {
 
-cliente:nombre,
+codigo_local: codigoLocal,
+cliente_id: clienteId,
 
 servicio:
 document.getElementById("servicioVisita").value,
@@ -75,22 +83,30 @@ precio:
 document.getElementById("precioVisita").value,
 
 nota:
-document.getElementById("notaVisita").value,
-
-fecha:
-new Date().toLocaleDateString()
+document.getElementById("notaVisita").value
 
 };
 
 
+let { error } = await sbClient
 
-visitas.push(visita);
+.from("visitas")
+
+.insert(visita);
 
 
-localStorage.setItem(
-"visitas",
-JSON.stringify(visitas)
-);
+if(error){
+
+alert("Error al guardar la visita: " + error.message);
+
+return;
+
+}
+
+
+document.getElementById("servicioVisita").value = "";
+document.getElementById("precioVisita").value = "";
+document.getElementById("notaVisita").value = "";
 
 
 mostrarVisitas();
@@ -100,7 +116,7 @@ mostrarVisitas();
 
 
 
-function mostrarVisitas(){
+async function mostrarVisitas(){
 
 
 let lista = document.getElementById("listaVisitas");
@@ -109,25 +125,43 @@ let lista = document.getElementById("listaVisitas");
 if(!lista)return;
 
 
+let { data, error } = await sbClient
+
+.from("visitas")
+
+.select("*")
+
+.eq("cliente_id", clienteId)
+
+.order("fecha", { ascending:false });
+
+
+if(error){
+
+console.error(error);
+
+return;
+
+}
+
+
 lista.innerHTML="";
 
 
-visitas
-.filter(v=>v.cliente==nombre)
-.forEach(v=>{
+data.forEach(v=>{
 
 
 lista.innerHTML += `
 
 <div class="card">
 
-<p>📅 ${v.fecha}</p>
+<p>📅 ${new Date(v.fecha).toLocaleDateString()}</p>
 
 <p>✂️ ${v.servicio}</p>
 
 <p>💰 $${v.precio}</p>
 
-<p>📝 ${v.nota}</p>
+<p>📝 ${v.nota || ""}</p>
 
 </div>
 
@@ -139,19 +173,16 @@ lista.innerHTML += `
 }
 
 
-mostrarVisitas();
-let colores = JSON.parse(
-localStorage.getItem("colores")
-) || [];
 
+// Colorimetría
 
-
-function guardarColor(){
+async function guardarColor(){
 
 
 let color = {
 
-cliente:nombre,
+codigo_local: codigoLocal,
+cliente_id: clienteId,
 
 marca:
 document.getElementById("marcaColor").value,
@@ -166,24 +197,25 @@ tiempo:
 document.getElementById("tiempoColor").value,
 
 formula:
-document.getElementById("formulaColor").value,
-
-fecha:
-new Date().toLocaleDateString()
+document.getElementById("formulaColor").value
 
 };
 
 
+let { error } = await sbClient
 
-colores.push(color);
+.from("colores")
+
+.insert(color);
 
 
+if(error){
 
-localStorage.setItem(
-"colores",
-JSON.stringify(colores)
-);
+alert("Error al guardar: " + error.message);
 
+return;
+
+}
 
 
 mostrarColores();
@@ -197,7 +229,7 @@ alert("Fórmula guardada");
 
 
 
-function mostrarColores(){
+async function mostrarColores(){
 
 
 let contenedor =
@@ -207,19 +239,37 @@ document.getElementById("historialColor");
 if(!contenedor)return;
 
 
+let { data, error } = await sbClient
+
+.from("colores")
+
+.select("*")
+
+.eq("cliente_id", clienteId)
+
+.order("fecha", { ascending:false });
+
+
+if(error){
+
+console.error(error);
+
+return;
+
+}
+
+
 contenedor.innerHTML="";
 
 
-colores
-.filter(c=>c.cliente==nombre)
-.forEach(c=>{
+data.forEach(c=>{
 
 
 contenedor.innerHTML += `
 
 <div class="card">
 
-<p>📅 ${c.fecha}</p>
+<p>📅 ${new Date(c.fecha).toLocaleDateString()}</p>
 
 <p>🎨 ${c.marca} - ${c.tono}</p>
 
@@ -239,49 +289,8 @@ contenedor.innerHTML += `
 }
 
 
-mostrarColores();
-function cargarFoto(event){
 
-let archivo = event.target.files[0];
-
-
-let lector = new FileReader();
-
-
-lector.onload=function(){
-
-localStorage.setItem(
-"fotoCliente_"+nombre,
-lector.result
-);
-
-
-document.getElementById("imagenCliente").src =
-lector.result;
-
-
-}
-
-
-lector.readAsDataURL(archivo);
-
-
-let foto = localStorage.getItem(
-"fotoCliente_"+nombre
-);
-
-
-if(foto){
-
-document.getElementById("imagenCliente").src = foto;
-
-}
-}
-let fotos = JSON.parse(
-localStorage.getItem("fotos_"+nombre)
-) || [];
-
-
+// Galería de fotos
 
 function agregarFotos(event){
 
@@ -295,18 +304,29 @@ for(let i=0;i<archivos.length;i++){
 let lector = new FileReader();
 
 
-lector.onload=function(){
+lector.onload = async function(){
 
 
-fotos.push(lector.result);
+let { error } = await sbClient
+
+.from("fotos_cliente")
+
+.insert({
+
+codigo_local: codigoLocal,
+cliente_id: clienteId,
+foto: lector.result
+
+});
 
 
+if(error){
 
-localStorage.setItem(
-"fotos_"+nombre,
-JSON.stringify(fotos)
-);
+alert("Error al subir la foto: " + error.message);
 
+return;
+
+}
 
 
 mostrarFotos();
@@ -325,7 +345,7 @@ lector.readAsDataURL(archivos[i]);
 
 
 
-function mostrarFotos(){
+async function mostrarFotos(){
 
 
 let galeria =
@@ -335,10 +355,30 @@ document.getElementById("galeriaFotos");
 if(!galeria)return;
 
 
+let { data, error } = await sbClient
+
+.from("fotos_cliente")
+
+.select("*")
+
+.eq("cliente_id", clienteId)
+
+.order("fecha", { ascending:false });
+
+
+if(error){
+
+console.error(error);
+
+return;
+
+}
+
+
 galeria.innerHTML="";
 
 
-fotos.forEach((foto,index)=>{
+data.forEach((foto)=>{
 
 
 galeria.innerHTML += `
@@ -347,8 +387,8 @@ galeria.innerHTML += `
 
 
 <img 
-src="${foto}"
-onclick="verFoto('${foto}')"
+src="${foto.foto}"
+onclick="verFoto('${foto.foto.replace(/'/g,"\\'")}')"
 style="
 width:120px;
 height:120px;
@@ -361,7 +401,7 @@ cursor:pointer;
 <br>
 
 
-<button onclick="eliminarFoto(${index})">
+<button onclick="eliminarFoto('${foto.id}')">
 
 🗑️
 
@@ -379,18 +419,25 @@ cursor:pointer;
 
 
 
-function eliminarFoto(index){
+async function eliminarFoto(id){
 
 
-fotos.splice(index,1);
+let { error } = await sbClient
+
+.from("fotos_cliente")
+
+.delete()
+
+.eq("id", id);
 
 
+if(error){
 
-localStorage.setItem(
-"fotos_"+nombre,
-JSON.stringify(fotos)
-);
+alert("Error al eliminar: " + error.message);
 
+return;
+
+}
 
 
 mostrarFotos();
@@ -400,7 +447,6 @@ mostrarFotos();
 
 
 
-mostrarFotos();
 function verFoto(foto){
 
 
@@ -421,16 +467,18 @@ document.getElementById("visorFoto").style.display="none";
 
 
 }
-let estilos = JSON.parse(
-localStorage.getItem("estilos_"+nombre)
-) || [];
 
 
 
-function guardarEstilo(){
+// Estilos favoritos
+
+async function guardarEstilo(){
 
 
 let estilo = {
+
+codigo_local: codigoLocal,
+cliente_id: clienteId,
 
 corte:
 document.getElementById("corteFavorito").value,
@@ -442,24 +490,25 @@ color:
 document.getElementById("colorFavorito").value,
 
 notas:
-document.getElementById("estiloNotas").value,
-
-fecha:
-new Date().toLocaleDateString()
+document.getElementById("estiloNotas").value
 
 };
 
 
+let { error } = await sbClient
 
-estilos.push(estilo);
+.from("estilos")
+
+.insert(estilo);
 
 
+if(error){
 
-localStorage.setItem(
-"estilos_"+nombre,
-JSON.stringify(estilos)
-);
+alert("Error al guardar: " + error.message);
 
+return;
+
+}
 
 
 mostrarEstilos();
@@ -469,7 +518,7 @@ mostrarEstilos();
 
 
 
-function mostrarEstilos(){
+async function mostrarEstilos(){
 
 
 let contenedor =
@@ -479,11 +528,30 @@ document.getElementById("historialEstilos");
 if(!contenedor)return;
 
 
+let { data, error } = await sbClient
+
+.from("estilos")
+
+.select("*")
+
+.eq("cliente_id", clienteId)
+
+.order("fecha", { ascending:false });
+
+
+if(error){
+
+console.error(error);
+
+return;
+
+}
+
+
 contenedor.innerHTML="";
 
 
-
-estilos.forEach(e=>{
+data.forEach(e=>{
 
 
 contenedor.innerHTML += `
@@ -491,7 +559,7 @@ contenedor.innerHTML += `
 <div class="card">
 
 
-<p>📅 ${e.fecha}</p>
+<p>📅 ${new Date(e.fecha).toLocaleDateString()}</p>
 
 <p>✂️ Corte: ${e.corte}</p>
 
@@ -510,7 +578,3 @@ contenedor.innerHTML += `
 
 
 }
-
-
-
-mostrarEstilos();

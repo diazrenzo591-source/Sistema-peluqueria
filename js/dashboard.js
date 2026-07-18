@@ -381,4 +381,4 @@ alert("Error al restaurar el backup: " + error.message);
 lector.readAsText(archivo);
 
 
-  }
+}
