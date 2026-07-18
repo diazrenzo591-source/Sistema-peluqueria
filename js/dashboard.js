@@ -185,6 +185,40 @@ contenedorTop.innerHTML = ranking
 cargarDashboard();
 
 
+// Link de reserva para compartir con clientes
+
+let urlReserva =
+window.location.origin +
+window.location.pathname.replace("dashboard.html","") +
+"reservar.html?local=" + codigoLocal;
+
+let campoLink = document.getElementById("linkReserva");
+
+if(campoLink){
+
+campoLink.value = urlReserva;
+
+}
+
+
+function copiarLinkReserva(){
+
+let valor = document.getElementById("linkReserva").value;
+
+
+navigator.clipboard.writeText(valor).then(function(){
+
+alert("Link copiado");
+
+}).catch(function(){
+
+alert("No se pudo copiar automáticamente. Copialo a mano: " + valor);
+
+});
+
+}
+
+
 
 // Exportar backup directo desde Supabase
 
@@ -337,39 +371,6 @@ location.reload();
 }catch(error){
 
 alert("Error al restaurar el backup: " + error.message);
-  
-
-}
-  // Link de reserva para compartir con clientes
-
-let urlReserva =
-window.location.origin +
-window.location.pathname.replace("dashboard.html","") +
-"reservar.html?local=" + codigoLocal;
-
-let campoLink = document.getElementById("linkReserva");
-
-if(campoLink){
-
-campoLink.value = urlReserva;
-
-}
-
-
-function copiarLinkReserva(){
-
-let valor = document.getElementById("linkReserva").value;
-
-
-navigator.clipboard.writeText(valor).then(function(){
-
-alert("Link copiado");
-
-}).catch(function(){
-
-alert("No se pudo copiar automáticamente. Copialo a mano: " + valor);
-
-});
 
 }
 
@@ -380,4 +381,4 @@ alert("No se pudo copiar automáticamente. Copialo a mano: " + valor);
 lector.readAsText(archivo);
 
 
-}
+  }
