@@ -1,24 +1,15 @@
-// Protección de sesión del portal de empleados usando Supabase Auth real
+// Protección de sesión del portal de empleados
 
-(async function(){
-
-let { data } = await sbClient.auth.getSession();
-
-
-if(!data.session){
+if(localStorage.getItem("empleadoSesion") != "activa"){
 
 window.location = "empleado-login.html";
 
 }
 
 
-})();
+function logoutEmpleado(){
 
-
-
-async function logoutEmpleado(){
-
-await sbClient.auth.signOut();
+localStorage.removeItem("empleadoSesion");
 
 localStorage.removeItem("empleadoId");
 

@@ -64,43 +64,25 @@ return;
 
 
 
-try{
+let { error } = await sbClient
 
+.from("empleados")
 
-let { data: sessionData } = await sbClient.auth.getSession();
+.insert({
 
-
-if(!sessionData.session){
-
-alert("Tu sesión expiró, volvé a entrar.");
-
-return;
-
-}
-
-
-let respuesta = await fetch(SUPABASE_URL + "/functions/v1/crear-empleado", {
-
-method: "POST",
-
-headers: {
-
-"Content-Type": "application/json",
-"Authorization": "Bearer " + sessionData.session.access_token
-
-},
-
-body: JSON.stringify({ nombre, comision, usuario, clave })
+codigo_local: codigoLocal,
+nombre: nombre,
+comision: comision,
+ganancias: 0,
+usuario: usuario,
+contrasena: clave
 
 });
 
 
-let resultado = await respuesta.json();
+if(error){
 
-
-if(!respuesta.ok){
-
-alert("Error al crear el empleado: " + (resultado.error || "desconocido"));
+alert("Error al guardar: " + error.message);
 
 return;
 
@@ -114,13 +96,6 @@ document.getElementById("claveEmpleado").value = "";
 
 
 mostrarEmpleados();
-
-
-}catch(error){
-
-alert("Error al crear el empleado: " + error.message);
-
-}
 
 
 }
@@ -244,6 +219,8 @@ return;
 
 document.getElementById("editarNombreEmpleado").value = data.nombre;
 document.getElementById("editarComisionEmpleado").value = data.comision;
+document.getElementById("editarUsuarioEmpleado").value = data.usuario || "";
+document.getElementById("editarClaveEmpleado").value = "";
 
 
 document.getElementById("formEditarEmpleado").style.display = "block";
@@ -261,13 +238,31 @@ if(!empleadoEditarId) return;
 
 let nombre = document.getElementById("editarNombreEmpleado").value;
 let comision = document.getElementById("editarComisionEmpleado").value;
+let usuario = document.getElementById("editarUsuarioEmpleado").value.trim();
+let clave = document.getElementById("editarClaveEmpleado").value;
+
+
+let cambios = {
+
+nombre: nombre,
+comision: comision,
+usuario: usuario
+
+};
+
+
+if(clave != ""){
+
+cambios.contrasena = clave;
+
+}
 
 
 let { error } = await sbClient
 
 .from("empleados")
 
-.update({ nombre: nombre, comision: comision })
+.update(cambios)
 
 .eq("id", empleadoEditarId);
 

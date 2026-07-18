@@ -1,25 +1,24 @@
-// Protección de sesión usando Supabase Auth de verdad
+// Protección de sesión: si no hay sesión activa, vuelve al login
 
-(async function(){
-
-let { data } = await sbClient.auth.getSession();
-
-
-if(!data.session){
+if(localStorage.getItem("sesion") != "activa"){
 
 window.location = "index.html";
 
-return;
+}else{
+
+verificarLicencia();
 
 }
 
 
-// Verificar que el local siga activo (por si lo bloquean mientras se usa)
+async function verificarLicencia(){
 
 let codigoLocal = localStorage.getItem("codigoLocal");
 
 
-let { data: local, error } = await sbClient
+try{
+
+let { data, error } = await sbClient
 
 .from("locales")
 
@@ -27,14 +26,14 @@ let { data: local, error } = await sbClient
 
 .eq("codigo", codigoLocal)
 
-.maybeSingle();
+.single();
 
 
-if(!local || local.estado != "activo"){
+if(error || !data || data.estado != "activo"){
 
 alert("El servicio de este local fue suspendido. Contactate con el proveedor del sistema.");
 
-await sbClient.auth.signOut();
+localStorage.removeItem("sesion");
 
 localStorage.removeItem("codigoLocal");
 
@@ -42,14 +41,18 @@ window.location = "index.html";
 
 }
 
+}catch(e){
 
-})();
+console.log("No se pudo verificar la licencia en este momento.");
+
+}
+
+}
 
 
+function logout(){
 
-async function logout(){
-
-await sbClient.auth.signOut();
+localStorage.removeItem("sesion");
 
 localStorage.removeItem("codigoLocal");
 
