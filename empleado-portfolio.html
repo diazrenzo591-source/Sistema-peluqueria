@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mi Portfolio - SalonMind</title>
+
+<link rel="stylesheet" href="css/style.css">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabaseClient.js"></script>
+<script src="js/empleadoSesion.js"></script>
+</head>
+<body>
+
+<div class="topbar">
+
+<h2>Mi Portal - SalonMind</h2>
+
+<nav>
+<a href="empleado-panel.html" title="Mi Perfil">👤</a>
+<a href="empleado-agenda.html" title="Mi Agenda">📅</a>
+<a href="empleado-portfolio.html" title="Mi Portfolio">📸</a>
+<a href="#" title="Cerrar sesión" onclick="logoutEmpleado()">🚪</a>
+</nav>
+
+</div>
+
+<div class="main">
+
+<h1>📸 Mi Portfolio</h1>
+
+<div class="card">
+
+<h2>Subir trabajo nuevo</h2>
+
+<p><strong>Tipo</strong></p>
+<select id="tipoTrabajo">
+<option value="foto">Foto</option>
+<option value="video">Video</option>
+</select>
+
+<p><strong>Foto "antes" (opcional)</strong></p>
+<input type="file" id="archivoAntes" accept="image/*">
+
+<p><strong>Foto o video "después" (obligatorio)</strong></p>
+<input type="file" id="archivoDespues" accept="image/*,video/*">
+
+<p><strong>Descripción</strong></p>
+<textarea id="descripcionTrabajo" placeholder="Ej: Degradado bajo con diseño"></textarea>
+
+<button class="btn" onclick="subirTrabajo()">⬆️ Subir trabajo</button>
+
+<p id="estadoSubida"></p>
+
+</div>
+
+<div id="galeriaTrabajos"></div>
+
+</div>
+
+<script src="js/empleadoPortfolio.js"></script>
+
+</body>
+</html>
