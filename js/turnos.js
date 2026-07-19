@@ -7,6 +7,33 @@ let serviciosCache = [];
 let turnoEditId = null;
 
 
+
+function minutosDesdeMedianoche(hora){
+
+let partes = hora.split(":");
+
+return Number(partes[0])*60 + Number(partes[1]);
+
+}
+
+
+
+function haySolapamiento(horaA, duracionA, horaB, duracionB){
+
+let inicioA = minutosDesdeMedianoche(horaA);
+
+let finA = inicioA + Number(duracionA || 30);
+
+let inicioB = minutosDesdeMedianoche(horaB);
+
+let finB = inicioB + Number(duracionB || 30);
+
+
+return inicioA < finB && inicioB < finA;
+
+}
+
+
 // Mostrar / ocultar formulario
 
 function mostrarTurno(){
@@ -120,31 +147,38 @@ if(!continuar) return;
 
 
 
-// Verificar que el profesional no tenga otro turno en ese horario
+// Verificar que el profesional no tenga otro turno que se superponga
 
-let { data: choqueProfesional } = await sbClient
+let servicioElegido = serviciosCache.find(s=>s.nombre==servicio);
+
+let duracionNueva = servicioElegido ? Number(servicioElegido.duracion) : 30;
+
+
+let { data: turnosDelDia } = await sbClient
 
 .from("turnos")
 
-.select("id")
+.select("id, hora, duracion, profesional, cliente")
 
 .eq("codigo_local", codigoLocal)
 
 .eq("fecha", fecha)
 
-.eq("hora", hora)
-
-.eq("profesional", profesional)
-
 .neq("estado", "Cancelado");
 
 
-let ocupado = (choqueProfesional || []).some(t => t.id != turnoEditId);
+let ocupado = (turnosDelDia || []).some(t =>
+
+t.id != turnoEditId &&
+t.profesional == profesional &&
+haySolapamiento(hora, duracionNueva, t.hora, t.duracion)
+
+);
 
 
 if(ocupado){
 
-alert("Ese profesional ya tiene un turno en ese horario.");
+alert("Ese profesional ya tiene un turno que se superpone con ese horario.");
 
 return;
 
@@ -152,31 +186,20 @@ return;
 
 
 
-// Verificar que el cliente no tenga otro turno en ese horario
+// Verificar que el cliente no tenga otro turno que se superponga
 
-let { data: choqueCliente } = await sbClient
+let clienteOcupado = (turnosDelDia || []).some(t =>
 
-.from("turnos")
+t.id != turnoEditId &&
+t.cliente == cliente &&
+haySolapamiento(hora, duracionNueva, t.hora, t.duracion)
 
-.select("id")
-
-.eq("codigo_local", codigoLocal)
-
-.eq("fecha", fecha)
-
-.eq("hora", hora)
-
-.eq("cliente", cliente)
-
-.neq("estado", "Cancelado");
-
-
-let clienteOcupado = (choqueCliente || []).some(t => t.id != turnoEditId);
+);
 
 
 if(clienteOcupado){
 
-alert("Ese cliente ya tiene un turno en ese horario.");
+alert("Ese cliente ya tiene un turno que se superpone con ese horario.");
 
 return;
 
@@ -194,7 +217,8 @@ servicio: servicio,
 profesional: profesional,
 estado: estado,
 precio: precio,
-forma_pago: formaPago
+forma_pago: formaPago,
+duracion: duracionNueva
 
 };
 

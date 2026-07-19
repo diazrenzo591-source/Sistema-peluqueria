@@ -10,13 +10,44 @@ let serviciosCache = [];
 let empleadosCache = [];
 
 
-let horasDelDia = [
+let HORA_APERTURA = "09:00";
 
-"09:00","10:00","11:00","12:00","13:00",
-"14:00","15:00","16:00","17:00","18:00",
-"19:00","20:00"
+let HORA_CIERRE = "20:00";
 
-];
+let INTERVALO_MINUTOS = 15;
+
+
+
+function minutosDesdeMedianoche(hora){
+
+let partes = hora.split(":");
+
+return Number(partes[0])*60 + Number(partes[1]);
+
+}
+
+
+function minutosAHora(minutos){
+
+let h = Math.floor(minutos/60);
+
+let m = minutos%60;
+
+return String(h).padStart(2,"0") + ":" + String(m).padStart(2,"0");
+
+}
+
+
+function haySolapamiento(inicioA, duracionA, inicioB, duracionB){
+
+let finA = inicioA + Number(duracionA || 30);
+
+let finB = inicioB + Number(duracionB || 30);
+
+
+return inicioA < finB && inicioB < finA;
+
+}
 
 
 
@@ -84,6 +115,9 @@ actualizarHorariosDisponibles();
 
 
 document.getElementById("fecha").addEventListener("change", actualizarHorariosDisponibles);
+
+
+document.getElementById("servicio").addEventListener("change", actualizarHorariosDisponibles);
 
 
 }
@@ -257,24 +291,31 @@ let profesional = document.getElementById("profesional").value;
 
 let fecha = document.getElementById("fecha").value;
 
+let servicio = document.getElementById("servicio").value;
+
 
 let selectHora = document.getElementById("hora");
 
 
-if(profesional=="Seleccionar profesional" || !fecha){
+if(profesional=="Seleccionar profesional" || !fecha || servicio=="Seleccionar servicio"){
 
-selectHora.innerHTML = `<option>Elegí profesional y fecha primero</option>`;
+selectHora.innerHTML = `<option>Elegí servicio, profesional y fecha primero</option>`;
 
 return;
 
 }
 
 
+let servicioInfo = serviciosCache.find(s=>s.nombre==servicio);
+
+let duracion = servicioInfo ? Number(servicioInfo.duracion) : 30;
+
+
 let { data, error } = await sbClient
 
 .from("turnos")
 
-.select("hora")
+.select("hora, duracion")
 
 .eq("codigo_local", codigoLocal)
 
@@ -294,15 +335,40 @@ return;
 }
 
 
-let ocupadas = (data || []).map(t=>t.hora);
+let ocupados = data || [];
 
 
-let libres = horasDelDia.filter(h => !ocupadas.includes(h));
+let inicioApertura = minutosDesdeMedianoche(HORA_APERTURA);
+
+let inicioCierre = minutosDesdeMedianoche(HORA_CIERRE);
+
+
+let libres = [];
+
+
+for(let inicio = inicioApertura; inicio + duracion <= inicioCierre; inicio += INTERVALO_MINUTOS){
+
+
+let choca = ocupados.some(t =>
+
+haySolapamiento(inicio, duracion, minutosDesdeMedianoche(t.hora), t.duracion)
+
+);
+
+
+if(!choca){
+
+libres.push(minutosAHora(inicio));
+
+}
+
+
+}
 
 
 if(libres.length==0){
 
-selectHora.innerHTML = `<option>No hay horarios libres ese día</option>`;
+selectHora.innerHTML = `<option>No hay horarios libres ese día para este servicio</option>`;
 
 return;
 
@@ -355,11 +421,16 @@ return;
 
 // Verificar que el horario siga libre (por si alguien más reservó justo antes)
 
-let { data: choque } = await sbClient
+let servicioInfo = serviciosCache.find(s=>s.nombre==servicio);
+
+let duracion = servicioInfo ? Number(servicioInfo.duracion) : 30;
+
+
+let { data: turnosDelDia } = await sbClient
 
 .from("turnos")
 
-.select("id")
+.select("hora, duracion")
 
 .eq("codigo_local", codigoLocal)
 
@@ -367,12 +438,22 @@ let { data: choque } = await sbClient
 
 .eq("fecha", fecha)
 
-.eq("hora", hora)
-
 .neq("estado", "Cancelado");
 
 
-if(choque && choque.length > 0){
+let choca = (turnosDelDia || []).some(t =>
+
+haySolapamiento(
+
+minutosDesdeMedianoche(hora), duracion,
+minutosDesdeMedianoche(t.hora), t.duracion
+
+)
+
+);
+
+
+if(choca){
 
 alert("Uy, justo se ocupó ese horario. Elegí otro.");
 
@@ -425,9 +506,6 @@ bloqueado: false
 
 // Buscar precio del servicio elegido
 
-let servicioInfo = serviciosCache.find(s=>s.nombre==servicio);
-
-
 let { error } = await sbClient.from("turnos").insert({
 
 codigo_local: codigoLocal,
@@ -438,6 +516,7 @@ servicio: servicio,
 profesional: profesional,
 estado: "Pendiente",
 precio: servicioInfo ? servicioInfo.precio : null,
+duracion: duracion,
 forma_pago: null
 
 });
