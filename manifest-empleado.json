@@ -1,11 +1,11 @@
 {
-  "name": "SalonMind",
-  "short_name": "SalonMind",
-  "start_url": "dashboard.html",
+  "name": "SalonMind - Mi Portal",
+  "short_name": "Mi Portal",
+  "start_url": "empleado-panel.html",
   "display": "standalone",
   "background_color": "#141414",
   "theme_color": "#141414",
-  "description": "Sistema de gestión para peluquerías y barberías",
+  "description": "Portal del empleado - SalonMind",
   "icons": [
     {
       "src": "icons/icon-192.png",
