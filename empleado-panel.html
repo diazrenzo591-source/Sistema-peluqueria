@@ -6,6 +6,9 @@
 <title>Mi Perfil - SalonMind</title>
 
 <link rel="stylesheet" href="css/style.css">
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest-empleado.json">
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabaseClient.js"></script>
@@ -27,6 +30,20 @@
 </div>
 
 <div class="main">
+
+<div class="card">
+
+<h2>🔔 Notificaciones</h2>
+
+<p>Activalas para enterarte al instante cuando un cliente reserva un turno con vos.</p>
+
+<p style="color:#EF4444;font-size:13px;">En iPhone: primero tenés que abrir esta página desde Safari, tocar "Compartir" → "Agregar a inicio", y activarlas desde ahí (no funciona en una pestaña común).</p>
+
+<button class="btn" onclick="activarNotificaciones()">🔔 Activar notificaciones</button>
+
+<p id="estadoNotificaciones"></p>
+
+</div>
 
 <div class="card">
 
@@ -87,6 +104,8 @@ style="width:170px;border-radius:50%;margin:20px 0;">
 </div>
 
 <script src="js/empleadoPanel.js"></script>
+
+<script src="js/empleadoNotificaciones.js"></script>
 
 </body>
 </html>
