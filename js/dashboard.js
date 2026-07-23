@@ -219,6 +219,40 @@ alert("No se pudo copiar automáticamente. Copialo a mano: " + valor);
 }
 
 
+// Link para el portal de empleados
+
+let urlEmpleados =
+window.location.origin +
+window.location.pathname.replace("dashboard.html","") +
+"empleado-login.html";
+
+let campoLinkEmpleados = document.getElementById("linkEmpleados");
+
+if(campoLinkEmpleados){
+
+campoLinkEmpleados.value = urlEmpleados;
+
+}
+
+
+function copiarLinkEmpleados(){
+
+let valor = document.getElementById("linkEmpleados").value;
+
+
+navigator.clipboard.writeText(valor).then(function(){
+
+alert("Link copiado");
+
+}).catch(function(){
+
+alert("No se pudo copiar automáticamente. Copialo a mano: " + valor);
+
+});
+
+}
+
+
 
 // Exportar backup directo desde Supabase
 
