@@ -1,0 +1,21 @@
+{
+  "name": "SalonMind",
+  "short_name": "SalonMind",
+  "start_url": "dashboard.html",
+  "display": "standalone",
+  "background_color": "#141414",
+  "theme_color": "#141414",
+  "description": "Sistema de gestión para peluquerías y barberías",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
